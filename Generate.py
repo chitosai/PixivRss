@@ -104,7 +104,7 @@ def FetchPixiv(mode):
                     <title>%s</title>
                     <link>%s</link>
                     <description>%s</description>
-                    <content:encoded>%s</content>
+                    <content>%s</content>
                     <pubDate>%s</pubDate>
                     <author>%s</author>
         　　       </item>''' % (
