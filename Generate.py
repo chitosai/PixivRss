@@ -69,7 +69,7 @@ def FetchPixiv(mode):
     html = urllib2.urlopen('http://www.pixiv.net/ranking.php?mode=' + mode).read()
 
     # 查找图片地址
-    m = re.findall('<h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">Views</dt><dd>(\d+)</dd><dt class="score">Total</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">Date submitted</dt><dd>(.+?)</dd></dl>', html)
+    m = re.findall('<h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">Views</dt><dd>(\d+)</dd><dt class="score">Total</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">Date submitted</dt><dd>(.+?)</dd></dl>', html)
     
     # 检查一下匹配结果
     if not len(m):
@@ -77,7 +77,7 @@ def FetchPixiv(mode):
         return
 
     # 生成rss
-    RSS = '''<rss version="2.0"><channel><title>Pixiv排行</title>
+    RSS = '''<rss version="2.0" encoding="utf-8"><channel><title>Pixiv排行</title>
 　　<link>http://rakuen.thec.me/PixivWall/</link>
 　　<description>就算是排行也要订阅啊混蛋！</description>
 　　<copyright>Under WTFPL</copyright>
@@ -87,6 +87,8 @@ def FetchPixiv(mode):
 
     
     for image in m:
+        desc = '<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
+        desc += '<p><image src="%s" title="%s" alt="%s" />' % (image[2], image[1], image[1])
         RSS += '''<item>
                     <title>%s</title>
                     <link>%s</link>
@@ -96,9 +98,9 @@ def FetchPixiv(mode):
         　　       </item>''' % (
             image[1], 
             'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[0], 
-            '画师：' + image[2] + ' 上传于：' + image[5] + ' 阅览数：' + image[3] + ' 总评分：' + image[4], 
-            image[5], 
-            image[2])
+            desc, 
+            image[6], 
+            image[3])
 
     RSS += '''</channel></rss>'''
 
