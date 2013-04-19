@@ -69,7 +69,7 @@ def FetchPixiv(mode):
     html = urllib2.urlopen('http://www.pixiv.net/ranking.php?mode=' + mode).read()
 
     # 查找图片地址
-    m = re.findall('<h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">Views</dt><dd>(\d+)</dd><dt class="score">Total</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">Date submitted</dt><dd>(.+?)</dd></dl>', html)
+    m = re.findall('<a class="image-thumbnail" href="[^"]+"><img class="ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="http://source.pixiv.net/source/images/common/transparent.gif"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">Views</dt><dd>(\d+)</dd><dt class="score">Total</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">Date submitted</dt><dd>(.+?)</dd></dl>', html)
     
     # 检查一下匹配结果
     if not len(m):
@@ -88,7 +88,8 @@ def FetchPixiv(mode):
         print 'Unknown Mode'
         return
 
-    RSS = '''<rss version="2.0" encoding="utf-8"><channel><title>Pixiv%s排行</title>
+    RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel><title>Pixiv%s排行</title>
 　　<link>http://rakuen.thec.me/PixivWall/</link>
 　　<description>就算是排行也要订阅啊混蛋！</description>
 　　<copyright>Under WTFPL</copyright>
@@ -99,21 +100,19 @@ def FetchPixiv(mode):
     
     for image in m:
         desc = '<![CDATA[<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><img src="%s"></p>]]>' % image[2]
+        desc += '<p><img src="%s"></p>]]>' % image[0]
         RSS += '''<item>
                     <title>%s</title>
                     <link>%s</link>
                     <description>%s</description>
-                    <content>%s</content>
+                    <content:encoded>%s</content:encoded>
                     <pubDate>%s</pubDate>
-                    <author>%s</author>
         　　       </item>''' % (
-            image[1], 
-            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[0], 
+            image[2], 
+            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[1], 
             desc,
             desc,
-            image[6], 
-            image[3])
+            image[6])
 
     RSS += '''</channel></rss>'''
 
