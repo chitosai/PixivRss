@@ -88,7 +88,7 @@ def FetchPixiv(mode):
     
     for image in m:
         desc = '<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><image src="%s" title="%s" alt="%s" /></p>' % (image[2], image[1], image[1])
+        desc += '<p><img src="%s" title="%s" alt="%s" /></p>' % (image[2], image[1], image[1])
         RSS += '''<item>
                     <title>%s</title>
                     <link>%s</link>
