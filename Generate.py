@@ -77,28 +77,41 @@ def FetchPixiv(mode):
         return
 
     # 生成rss
-    RSS = '''<rss version="2.0" encoding="utf-8"><channel><title>Pixiv排行</title>
+    if mode == 'daily' : title = '总'
+    elif mode == 'weekly' : title = '本周'
+    elif mode == 'monthly' : title = '本月'
+    elif mode == 'rookie' : title = '新人'
+    elif mode == 'original' : title = '原创'
+    elif mode == 'male' : title = '男性'
+    elif mode == 'female' : title = '女性'
+    else:
+        print 'Unknown Mode'
+        return
+
+    RSS = '''<rss version="2.0" encoding="utf-8"><channel><title>Pixiv%s排行</title>
 　　<link>http://rakuen.thec.me/PixivWall/</link>
 　　<description>就算是排行也要订阅啊混蛋！</description>
 　　<copyright>Under WTFPL</copyright>
 　　<language>zh-CN</language>
 　　<lastBuildDate>%s</lastBuildDate>
-　　<generator>PixivWall by TheC</generator>''' % datetime.datetime.now()
+　　<generator>PixivWall by TheC</generator>''' % (title, datetime.datetime.now())
 
     
     for image in m:
-        desc = '<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><img src="%s" title="%s" alt="%s" /></p>' % (image[2], image[1], image[1])
+        desc = '<![CDATA[<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
+        desc += '<p><img src="%s"></p>]]>' % image[2]
         RSS += '''<item>
                     <title>%s</title>
                     <link>%s</link>
                     <description>%s</description>
+                    <content:encoded>%s</content>
                     <pubDate>%s</pubDate>
                     <author>%s</author>
         　　       </item>''' % (
             image[1], 
             'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[0], 
-            desc, 
+            desc,
+            desc,
             image[6], 
             image[3])
 
