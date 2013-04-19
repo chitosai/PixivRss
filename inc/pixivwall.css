@@ -25,7 +25,9 @@ body{
 }
 
 #origins{
-	display: none;
+	width: 0;
+	height: 0;
+	overflow: hidden;
 }
 
 @-webkit-keyframes fadeIn{

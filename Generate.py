@@ -45,6 +45,7 @@ IMAGE_LIST = os.listdir(IMAGE_PATH)
 
 IMAGES = '\n'
 for image in IMAGE_LIST:
+    if image == '.gitignore' : continue
     IMAGES += '\t\t<img class="origin" src="images/' + image + '" />\n'
 IMAGES += '\t'
 # 生成新静态页面
