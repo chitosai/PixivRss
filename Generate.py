@@ -61,31 +61,36 @@ def GenerateHTML():
 def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
     global ABS_PATH
 
-    cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
+    try:
+        cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
 
-    try :
-        cj.load( ABS_PATH + 'pixiv.cookie.txt' )
+        try :
+            cj.load( ABS_PATH + 'pixiv.cookie.txt' )
+        except:
+            pass # 还没有cookie只好拉倒咯
+
+        ckproc = urllib2.HTTPCookieProcessor( cj )
+
+        opener = urllib2.build_opener( ckproc )
+        opener.addheaders = [
+            ('Accept-Language', 'zh-CN,zh;q=0.8'),
+            ('Accept-Charset', 'UTF-8,*;q=0.5'),
+            ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31'),
+            ('Referer', refer)
+        ]
+
+        if data != '':
+            request = urllib2.Request( url = url, data = data )
+            res = opener.open( request )
+            cj.save() # 只有在post时才保存新获得的cookie
+        else:
+            res = opener.open( url )
+
+        return res.read()
+
     except:
-        pass # 还没有cookie只好拉倒咯
-
-    ckproc = urllib2.HTTPCookieProcessor( cj )
-
-    opener = urllib2.build_opener( ckproc )
-    opener.addheaders = [
-        ('Accept-Language', 'zh-CN,zh;q=0.8'),
-        ('Accept-Charset', 'UTF-8,*;q=0.5'),
-        ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31'),
-        ('Referer', refer)
-    ]
-
-    if data != '':
-        request = urllib2.Request( url = url, data = data )
-        res = opener.open( request )
-        cj.save() # 只有在post时才保存新获得的cookie
-    else:
-        res = opener.open( url )
-
-    return res.read()
+        print 'unable to fetch ' + url
+        return
 
 def LoginToPixiv():
     # 然后登录
