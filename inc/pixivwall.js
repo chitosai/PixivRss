@@ -9,6 +9,9 @@ function layout() {
 
   // 总块数
   CUBE_TOTAL = cube_rows * cube_each_row;
+  // 以及尺寸
+  WALL_WIDTH = cube_each_row * cube_size,
+  WALL_HEIGHT = cube_rows * cube_size;
 
   // 给#wall定位，让wall全屏居中
   var wall = $('<div>').attr('id', 'wall').css({
@@ -52,11 +55,19 @@ function prepareImage() {
   IMAGE_TOTAL = $('.origin').length;
   IMAGE_CURRENT = 0;
 
+  // 请求图片的参数
+  var params = '&w=' + WALL_WIDTH + '&h=' + WALL_HEIGHT + '&zc=2&q=85&cc=202020';
+
   // 读取图片信息
   IMAGES = [];
   $('.origin').each(function(){
     var image = {};
-    image.src = this.src;
+    // 如果图片比屏幕大就不用缩放，否则就缩放后再读取
+    if( $(this).width() > WALL_WIDTH && $(this).height() > WALL_HEIGHT )
+      image.src = this.src;
+    else
+      image.src = 'timthumb.php?src=' + this.src + params;
+
     IMAGES.push(image);
   });
 }
@@ -88,10 +99,13 @@ function doAnimation() {
   fx( ANIMATIONS[random(ANIMATION_TOTAL)] );
 }
 
-$(document).ready(function() {
+$(window).bind('load', function() {
   layout();
   prepareImage();
   animation();
 });
-$(window).resize(layout);
+$(window).resize(function(){
+  layout();
+  prepareImage();
+});
 

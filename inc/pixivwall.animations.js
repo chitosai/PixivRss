@@ -1,5 +1,5 @@
 // 动画列表
-ANIMATIONS = ['fade', 'moveTop', 'moveBottom', 'moveLeft', 'moveRight', 'scale'];
+ANIMATIONS = ['fade', 'scale', 'moveTop', 'moveBottom', 'moveLeft', 'moveRight'];
 ANIMATION_TOTAL = ANIMATIONS.length;
 
 // 效果

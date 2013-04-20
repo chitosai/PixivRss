@@ -18,6 +18,7 @@ body{
 }
 .buffer_a,
 .buffer_b{
+	background-color: #202020;
 	background-repeat: no-repeat;
 	position: absolute;
 	top: 0;

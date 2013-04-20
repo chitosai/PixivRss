@@ -1,1 +1,4 @@
 /cache/
+/*.pyc
+/pixiv.cookie.txt
+/config.py
