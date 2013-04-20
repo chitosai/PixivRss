@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, datetime, platform, os, sys
+import urllib2, re, datetime, platform, os, sys, time
 from config import *
 from cookielib import MozillaCookieJar
 
@@ -140,10 +140,11 @@ def FetchPixiv(mode):
     IMAGE_PATH = ABS_PATH + 'images' + SLASH
 
     # 清理现有大图
-    image_list = os.listdir(IMAGE_PATH)
-    for image in image_list:
-        if image == '.gitignore' : continue
-        os.remove( IMAGE_PATH + image )
+    if mode == 'male' : 
+        image_list = os.listdir(IMAGE_PATH)
+        for image in image_list:
+            if image == '.gitignore' : continue
+            os.remove( IMAGE_PATH + image )
 
     for image in m:
         # 生成RSS中的item
@@ -168,6 +169,9 @@ def FetchPixiv(mode):
         f.write(preview)
         f.close()
 
+        # 只有男性排行抓图大图回来
+        if mode != 'male': continue
+
         # 和大图
         img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image[1],
                                  refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + image[1])
@@ -181,9 +185,13 @@ def FetchPixiv(mode):
         
         # 保存大图
         img = Get(img_url)
-        f = open(IMAGE_PATH + image[1] + '.jpg', 'wb')
-        f.write(img)
-        f.close()
+        if img != None:
+            f = open(IMAGE_PATH + image[1] + '.jpg', 'wb')
+            f.write(img)
+            f.close()
+
+        # 暂停一下试试
+        time.sleep(1)
 
     RSS += '''</channel></rss>'''
 
