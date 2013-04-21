@@ -15,7 +15,7 @@ HTML = '''
 <html lang="cn">
 <head>
     <meta charset="UTF-8">
-    <title>%s - %s</title>
+    <title>%s</title>
     <link rel="stylesheet" href="inc/pixivwall.css">
 </head>
 <body>
@@ -48,8 +48,7 @@ def GenerateHTML():
     # 生成新静态页面
     f = open('index.html', 'w')
     f.write( HTML % (
-        CONFIG['page_title'], 
-        time.strftime( '%Y-%m-%d', time.localtime(time.time()) ),
+        CONFIG['page_title'],
         IMAGES, 
         CONFIG['animation_duration'],
         CONFIG['animation_delay'], 
