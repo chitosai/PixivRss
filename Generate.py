@@ -15,7 +15,7 @@ HTML = '''
 <html lang="cn">
 <head>
     <meta charset="UTF-8">
-    <title>%s</title>
+    <title>%s - %s</title>
     <link rel="stylesheet" href="inc/pixivwall.css">
 </head>
 <body>
@@ -49,6 +49,7 @@ def GenerateHTML():
     f = open('index.html', 'w')
     f.write( HTML % (
         CONFIG['page_title'], 
+        time.strftime( '%Y-%m-%d', time.localtime(time.time()) ),
         IMAGES, 
         CONFIG['animation_duration'],
         CONFIG['animation_delay'], 
@@ -106,8 +107,8 @@ def FetchPixiv(mode):
     elif mode == 'monthly' : title = '本月'
     elif mode == 'rookie' : title = '新人'
     elif mode == 'original' : title = '原创'
-    elif mode == 'male' : title = '男性'
-    elif mode == 'female' : title = '女性'
+    elif mode == 'male' : title = '受男性欢迎的作品'
+    elif mode == 'female' : title = '受女性欢迎的作品'
     else:
         print 'Unknown Mode'
         return
