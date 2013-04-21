@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, datetime, platform, os, sys, time
+import urllib2, re, datetime, platform, os, sys, time, datetime
 from config import *
 from cookielib import MozillaCookieJar
 
@@ -56,6 +56,13 @@ def GenerateHTML():
     ))
     f.close()
 
+
+def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
+    date = datetime.datetime.strptime(time_original, format_original)
+    return date.strftime('%a, %d %b %Y %H:%M:%S +8000')
+
+def GetCurrentTime():
+    return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
 
 
 def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
@@ -133,7 +140,7 @@ def FetchPixiv(mode):
 　　<copyright>Under WTFPL</copyright>
 　　<language>zh-CN</language>
 　　<lastBuildDate>%s</lastBuildDate>
-　　<generator>PixivWall by TheC</generator>''' % (title, datetime.datetime.now())
+　　<generator>PixivWall by TheC</generator>''' % (title, GetCurrentTime())
 
     # 准备下载图
     PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
@@ -161,7 +168,7 @@ def FetchPixiv(mode):
             'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[1], 
             desc,
             desc,
-            image[6])
+            FormatTime(image[6]))
 
         # 下载预览图...
         preview = Get(image[0], refer = 'http://www.pixiv.net/ranking.php')
