@@ -201,6 +201,10 @@ def FetchPixiv(mode):
     f.write(RSS)
     f.close
 
+    # 更新静态页面
+    if mode == 'male': 
+        GenerateHTML()
+
     
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -208,5 +212,6 @@ if __name__ == '__main__':
         if param == 'update-rss':
             FetchPixiv(sys.argv[2])
     else:
+        GenerateHTML()
         print 'No params specified'
 
