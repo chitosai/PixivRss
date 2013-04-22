@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, datetime, platform, os, sys, time, datetime
-from config import *
+import urllib2, re, platform, os, sys, time, datetime
+# from config import *
 from cookielib import MozillaCookieJar
 
 # 分隔符
@@ -8,53 +8,6 @@ if platform.system() == 'Windows': SLASH = '\\'
 else: SLASH = '/'
 
 ABS_PATH = sys.path[0] + SLASH
-PHP_SESSION_ID = 0
-
-HTML = '''
-<!doctype html>
-<html lang="cn">
-<head>
-    <meta charset="UTF-8">
-    <title>%s</title>
-    <link rel="stylesheet" href="inc/pixivwall.css">
-</head>
-<body>
-    <div id="wall-wrapper"></div>
-    <div id="origins">%s</div>
-    <script src="inc/jquery-1.9.1.min.js"></script>
-    <script src="inc/jquery.transit.min.js"></script>
-    <script src="inc/pixivwall.animations.js"></script>
-    <script src="inc/pixivwall.js"></script>
-    <script>
-        DURATION = %s;
-        DELAY = %s;
-        CUBE_SIZE = %s;
-    </script>
-</body>
-</html>
-'''
-
-# 生成静态页面
-def GenerateHTML():
-    # 获取图片列表
-    IMAGE_PATH = sys.path[0] + SLASH + 'images' + SLASH
-    IMAGE_LIST = os.listdir(IMAGE_PATH)
-
-    IMAGES = '\n'
-    for image in IMAGE_LIST:
-        if image == '.gitignore' : continue
-        IMAGES += '\t\t<img class="origin" src="images/' + image + '" />\n'
-    IMAGES += '\t'
-    # 生成新静态页面
-    f = open('index.html', 'w')
-    f.write( HTML % (
-        CONFIG['page_title'],
-        IMAGES, 
-        CONFIG['animation_duration'],
-        CONFIG['animation_delay'], 
-        CONFIG['cube_size']
-    ))
-    f.close()
 
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
@@ -66,19 +19,19 @@ def GetCurrentTime():
 
 
 def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
-    global ABS_PATH
+    # global ABS_PATH
 
     try:
-        cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
+        # cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
 
-        try :
-            cj.load( ABS_PATH + 'pixiv.cookie.txt' )
-        except:
-            pass # 还没有cookie只好拉倒咯
+        # try :
+        #     cj.load( ABS_PATH + 'pixiv.cookie.txt' )
+        # except:
+        #     pass # 还没有cookie只好拉倒咯
 
-        ckproc = urllib2.HTTPCookieProcessor( cj )
+        # ckproc = urllib2.HTTPCookieProcessor( cj )
 
-        opener = urllib2.build_opener( ckproc )
+        opener = urllib2.build_opener() #ckproc )
         opener.addheaders = [
             ('Accept-Language', 'zh-CN,zh;q=0.8'),
             ('Accept-Charset', 'UTF-8,*;q=0.5'),
@@ -86,23 +39,24 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
             ('Referer', refer)
         ]
 
-        if data != '':
-            request = urllib2.Request( url = url, data = data )
-            res = opener.open( request )
-            cj.save() # 只有在post时才保存新获得的cookie
-        else:
-            res = opener.open( url )
+        # if data != '':
+        #     request = urllib2.Request( url = url, data = data )
+        #     res = opener.open( request )
+        #     cj.save() # 只有在post时才保存新获得的cookie
+        # else:
+        #     res = opener.open( url )
 
+        res = opener.open(url)
         return res.read()
 
     except:
         print 'unable to fetch ' + url
         return
 
-def LoginToPixiv():
-    # 然后登录
-    data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % (PIXIV_USER, PIXIV_PASS)
-    return Get( 'http://www.pixiv.net/login.php', data )
+# def LoginToPixiv():
+#     # 然后登录
+#     data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % (PIXIV_USER, PIXIV_PASS)
+#     return Get( 'http://www.pixiv.net/login.php', data )
 
 
 # 抓pixiv页面
@@ -120,13 +74,13 @@ def FetchPixiv(mode):
         return
 
     # 先登录
-    LoginToPixiv()
+    # LoginToPixiv()
 
     # 获取排行
-    html = Get('http://www.pixiv.net/ranking.php?mode=' + mode, refer = '')
+    html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
     # 查找所需信息
-    m = re.findall('<a class="image-thumbnail" href="[^"]+"><img class="ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="http://source\.pixiv\.net/source/images/common/transparent\.gif"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">閱覽數</dt><dd>(\d+)</dd><dt class="score">總分</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">投稿日期</dt><dd>(.+?)</dd></dl>', html)
+    m = re.findall('<a class="image-thumbnail" href="[^"]+"><img class="ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="http://source\.pixiv\.net/source/images/common/transparent\.gif"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">阅览数</dt><dd>(\d+)</dd><dt class="score">总分</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">投稿日期</dt><dd>(.+?)</dd></dl>', html)
     
     # 检查一下匹配结果
     if not len(m):
@@ -144,14 +98,14 @@ def FetchPixiv(mode):
 
     # 准备下载图
     PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
-    IMAGE_PATH = ABS_PATH + 'images' + SLASH
+    # IMAGE_PATH = ABS_PATH + 'images' + SLASH
 
     # 清理现有大图
-    if mode == 'male' : 
-        image_list = os.listdir(IMAGE_PATH)
-        for image in image_list:
-            if image == '.gitignore' : continue
-            os.remove( IMAGE_PATH + image )
+    # if mode == 'male' : 
+    #     image_list = os.listdir(IMAGE_PATH)
+    #     for image in image_list:
+    #         if image == '.gitignore' : continue
+    #         os.remove( IMAGE_PATH + image )
 
     for image in m:
         # 生成RSS中的item
@@ -176,26 +130,26 @@ def FetchPixiv(mode):
         f.write(preview)
         f.close()
 
-        # 只有男性排行抓图大图回来
-        if mode != 'male': continue
+        # # 只有男性排行抓图大图回来
+        # if mode != 'male': continue
 
-        # 和大图
-        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image[1],
-                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + image[1])
-        img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
+        # # 和大图
+        # img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image[1],
+        #                          refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + image[1])
+        # img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
 
-        if not img_m:
-            print 'Can\'t find big image url'
-            return
-        else:
-            img_url = img_m.group(1)
+        # if not img_m:
+        #     print 'Can\'t find big image url'
+        #     return
+        # else:
+        #     img_url = img_m.group(1)
         
-        # 保存大图
-        img = Get(img_url)
-        if img != None:
-            f = open(IMAGE_PATH + image[1] + '.jpg', 'wb')
-            f.write(img)
-            f.close()
+        # # 保存大图
+        # img = Get(img_url)
+        # if img != None:
+        #     f = open(IMAGE_PATH + image[1] + '.jpg', 'wb')
+        #     f.write(img)
+        #     f.close()
 
         # 暂停一下试试
         time.sleep(1)
@@ -208,9 +162,6 @@ def FetchPixiv(mode):
     f.write(RSS)
     f.close
 
-    # 更新静态页面
-    if mode == 'male': 
-        GenerateHTML()
 
     
 if __name__ == '__main__':
@@ -219,6 +170,5 @@ if __name__ == '__main__':
         if param == 'update-rss':
             FetchPixiv(sys.argv[2])
     else:
-        GenerateHTML()
         print 'No params specified'
 
