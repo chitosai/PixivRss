@@ -55,6 +55,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
 
 # def LoginToPixiv():
 #     # 然后登录
+
 #     data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % (PIXIV_USER, PIXIV_PASS)
 #     return Get( 'http://www.pixiv.net/login.php', data )
 
@@ -104,12 +105,12 @@ def FetchPixiv(mode):
 
     RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel><title>Pixiv%s排行</title>
-　　<link>http://rakuen.thec.me/PixivWall/</link>
+　　<link>http://rakuen.thec.me/PixivRss/</link>
 　　<description>就算是排行也要订阅啊混蛋！</description>
 　　<copyright>Under WTFPL</copyright>
 　　<language>zh-CN</language>
 　　<lastBuildDate>%s</lastBuildDate>
-　　<generator>PixivWall by TheC</generator>''' % (title, GetCurrentTime())
+　　<generator>PixivRss by TheC</generator>''' % (title, GetCurrentTime())
 
     # 准备下载图
     PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
@@ -125,7 +126,7 @@ def FetchPixiv(mode):
     for image in m:
         # 生成RSS中的item
         desc = '<![CDATA[<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><img src="http://rakuen.thec.me/PixivWall/previews/%s.jpg"></p>]]>' % image[1]
+        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>]]>' % image[1]
         RSS += '''<item>
                     <title>%s</title>
                     <link>%s</link>
