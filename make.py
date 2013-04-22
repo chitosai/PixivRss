@@ -69,7 +69,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     data = Get(url, refer = refer)
 
     # 写入
-    f = open(data, 'wb')
+    f = open(fname, 'wb')
     f.write(data)
     f.close()
 
