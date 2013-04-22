@@ -59,6 +59,21 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
 #     return Get( 'http://www.pixiv.net/login.php', data )
 
 
+# 输出文件
+def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
+    # 检查文件是否存在
+    if os.path.exists(fname) : 
+        return
+
+    # 下载
+    data = Get(url, refer = refer)
+
+    # 写入
+    f = open(data, 'wb')
+    f.write(data)
+    f.close()
+
+
 # 抓pixiv页面
 def FetchPixiv(mode):
     # 验证分类
@@ -125,10 +140,7 @@ def FetchPixiv(mode):
             FormatTime(image[6]))
 
         # 下载预览图...
-        preview = Get(image[0], refer = 'http://www.pixiv.net/ranking.php')
-        f = open(PREVIEW_PATH + image[1] + '.jpg', 'wb')
-        f.write(preview)
-        f.close()
+        download( PREVIEW_PATH + image[1] + '.jpg', image[0] )
 
         # # 只有男性排行抓图大图回来
         # if mode != 'male': continue
@@ -145,11 +157,7 @@ def FetchPixiv(mode):
         #     img_url = img_m.group(1)
         
         # # 保存大图
-        # img = Get(img_url)
-        # if img != None:
-        #     f = open(IMAGE_PATH + image[1] + '.jpg', 'wb')
-        #     f.write(img)
-        #     f.close()
+        # download( IMAGE_PATH + image[1] + '.jpg', img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image[1] )
 
         # 暂停一下试试
         time.sleep(1)
