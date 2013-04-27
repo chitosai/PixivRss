@@ -3,11 +3,18 @@ import urllib2, re, platform, os, sys, time, datetime
 # from config import *
 from cookielib import MozillaCookieJar
 
+# 输出的条目类型
+config = {
+    'totals' : [10, 20, 30, 40, 50]
+}
+
 # 分隔符
 if platform.system() == 'Windows': SLASH = '\\'
 else: SLASH = '/'
 
 ABS_PATH = sys.path[0] + SLASH
+
+ITEMS = []
 
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
@@ -77,17 +84,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 
 # 抓pixiv页面
 def FetchPixiv(mode):
-    # 验证分类
-    if mode == 'daily' : title = '总'
-    elif mode == 'weekly' : title = '本周'
-    elif mode == 'monthly' : title = '本月'
-    elif mode == 'rookie' : title = '新人'
-    elif mode == 'original' : title = '原创'
-    elif mode == 'male' : title = '受男性欢迎的作品'
-    elif mode == 'female' : title = '受女性欢迎的作品'
-    else:
-        print 'Unknown Mode'
-        return
+    global ITEMS
 
     # 先登录
     # LoginToPixiv()
@@ -103,15 +100,6 @@ def FetchPixiv(mode):
         print 'failed to get ranking list info'
         return
 
-    RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-    <channel><title>Pixiv%s排行</title>
-　　<link>http://rakuen.thec.me/PixivRss/</link>
-　　<description>就算是排行也要订阅啊混蛋！</description>
-　　<copyright>Under WTFPL</copyright>
-　　<language>zh-CN</language>
-　　<lastBuildDate>%s</lastBuildDate>
-　　<generator>PixivRss by TheC</generator>''' % (title, GetCurrentTime())
-
     # 准备下载图
     PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
     # IMAGE_PATH = ABS_PATH + 'images' + SLASH
@@ -123,11 +111,12 @@ def FetchPixiv(mode):
     #         if image == '.gitignore' : continue
     #         os.remove( IMAGE_PATH + image )
 
+
     for image in m:
         # 生成RSS中的item
         desc = '<![CDATA[<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
         desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>]]>' % image[1]
-        RSS += '''<item>
+        ITEMS.append('''<item>
                     <title>%s</title>
                     <link>%s</link>
                     <description>%s</description>
@@ -138,7 +127,7 @@ def FetchPixiv(mode):
             'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[1], 
             desc,
             desc,
-            FormatTime(image[6]))
+            FormatTime(image[6])))
 
         # 下载预览图...
         download( PREVIEW_PATH + image[1] + '.jpg', image[0] )
@@ -163,13 +152,35 @@ def FetchPixiv(mode):
         # 暂停一下试试
         time.sleep(1)
 
-    RSS += '''</channel></rss>'''
+    
 
-    # 输出RSS
-    RSS_PATH = ABS_PATH + 'rss' + SLASH
-    f = open(RSS_PATH + mode + '.xml', 'w')
-    f.write(RSS)
-    f.close
+
+# 输出rss文件
+def GenerateRSS(mode, title):
+    global config
+
+    for total in config['totals']:
+
+        RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+        <channel><title>Pixiv%s排行</title>
+    　　<link>http://rakuen.thec.me/PixivRss/</link>
+    　　<description>就算是排行也要订阅啊混蛋！</description>
+    　　<copyright>Under WTFPL</copyright>
+    　　<language>zh-CN</language>
+    　　<lastBuildDate>%s</lastBuildDate>
+    　　<generator>PixivRss by TheC</generator>''' % (title, GetCurrentTime())
+
+        # 只输出指定个条目
+        for i in range(total):
+            RSS += ITEMS[i]
+
+        RSS += '''</channel></rss>'''
+
+        # 输出到文件
+        RSS_PATH = ABS_PATH + 'rss' + SLASH
+        f = open(RSS_PATH + mode + '-' + str(total) + '.xml', 'w')
+        f.write(RSS)
+        f.close
 
 
     
@@ -177,7 +188,22 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         param = sys.argv[1]
         if param == 'update-rss':
-            FetchPixiv(sys.argv[2])
+            mode = sys.argv[2]
+
+            # 验证分类
+            if mode == 'daily' : title = '总'
+            elif mode == 'weekly' : title = '本周'
+            elif mode == 'monthly' : title = '本月'
+            elif mode == 'rookie' : title = '新人'
+            elif mode == 'original' : title = '原创'
+            elif mode == 'male' : title = '受男性欢迎的作品'
+            elif mode == 'female' : title = '受女性欢迎的作品'
+            else:
+                print 'Unknown Mode'
+                exit(1)
+
+            FetchPixiv(mode)
+            GenerateRSS(mode, title)
     else:
         print 'No params specified'
 
