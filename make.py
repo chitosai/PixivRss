@@ -4,7 +4,7 @@ import urllib2, re, platform, os, sys, time, datetime
 from cookielib import MozillaCookieJar
 
 # 输出的条目类型
-config = {
+CONFIG = {
     'totals' : [10, 20, 30, 40, 50]
 }
 
@@ -111,7 +111,6 @@ def FetchPixiv(mode):
     #         if image == '.gitignore' : continue
     #         os.remove( IMAGE_PATH + image )
 
-
     for image in m:
         # 生成RSS中的item
         desc = '<![CDATA[<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
@@ -157,9 +156,12 @@ def FetchPixiv(mode):
 
 # 输出rss文件
 def GenerateRSS(mode, title):
-    global config
+    global CONFIG, ITEMS
+    real_total = len(ITEMS)
 
-    for total in config['totals']:
+    for total in CONFIG['totals']:
+        # 有时候因为pixiv那边的bug(?)会少几个条目，这时候只能以实际输出的数量为准了
+        if total > real_total : total = real_total
 
         RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
         <channel><title>Pixiv%s排行</title>
