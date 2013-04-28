@@ -157,23 +157,25 @@ def FetchPixiv(mode):
 # 输出rss文件
 def GenerateRSS(mode, title):
     global CONFIG, ITEMS
-    real_total = len(ITEMS)
 
     for total in CONFIG['totals']:
         # 有时候因为pixiv那边的bug(?)会少几个条目，这时候只能以实际输出的数量为准了
-        if total > real_total : total = real_total
+        if total > len(ITEMS) : 
+            real_total = len(ITEMS)
+        else:
+            real_total = total
 
         RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-        <channel><title>Pixiv%s排行</title>
+        <channel><title>Pixiv%s排行 - 前%s</title>
     　　<link>http://rakuen.thec.me/PixivRss/</link>
     　　<description>就算是排行也要订阅啊混蛋！</description>
     　　<copyright>Under WTFPL</copyright>
     　　<language>zh-CN</language>
     　　<lastBuildDate>%s</lastBuildDate>
-    　　<generator>PixivRss by TheC</generator>''' % (title, GetCurrentTime())
+    　　<generator>PixivRss by TheC</generator>''' % (title, total, GetCurrentTime())
 
         # 只输出指定个条目
-        for i in range(total):
+        for i in range(real_total):
             RSS += ITEMS[i]
 
         RSS += '''</channel></rss>'''
