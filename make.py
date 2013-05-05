@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import urllib2, re, platform, os, sys, time, datetime
-# from config import *
 from cookielib import MozillaCookieJar
 
 # 输出的条目类型
 CONFIG = {
-    'totals' : [10, 20, 30, 40, 50]
+    'totals' : [10, 20, 30, 40, 50],
+    'PIXIV_USER' : 'pixivrss@sina.com',
+    'PIXIV_PASS' : '111000'
 }
 
 # 分隔符
@@ -26,19 +27,18 @@ def GetCurrentTime():
 
 
 def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
-    # global ABS_PATH
-
+    global ABS_PATH
     try:
-        # cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
+        cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
 
-        # try :
-        #     cj.load( ABS_PATH + 'pixiv.cookie.txt' )
-        # except:
-        #     pass # 还没有cookie只好拉倒咯
+        try :
+            cj.load( ABS_PATH + 'pixiv.cookie.txt' )
+        except:
+            pass # 还没有cookie只好拉倒咯
 
-        # ckproc = urllib2.HTTPCookieProcessor( cj )
+        ckproc = urllib2.HTTPCookieProcessor( cj )
 
-        opener = urllib2.build_opener() #ckproc )
+        opener = urllib2.build_opener( ckproc )
         opener.addheaders = [
             ('Accept-Language', 'zh-CN,zh;q=0.8'),
             ('Accept-Charset', 'UTF-8,*;q=0.5'),
@@ -46,25 +46,26 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
             ('Referer', refer)
         ]
 
-        # if data != '':
-        #     request = urllib2.Request( url = url, data = data )
-        #     res = opener.open( request )
-        #     cj.save() # 只有在post时才保存新获得的cookie
-        # else:
-        #     res = opener.open( url )
+        if data != '':
+            request = urllib2.Request( url = url, data = data )
+            res = opener.open( request )
+            cj.save() # 只有在post时才保存新获得的cookie
+        else:
+            res = opener.open( url )
 
         res = opener.open(url)
         return res.read()
 
     except:
-        print 'unable to fetch ' + url
+        print 'unable to get ' + url
         return
 
-# def LoginToPixiv():
-#     # 然后登录
 
-#     data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % (PIXIV_USER, PIXIV_PASS)
-#     return Get( 'http://www.pixiv.net/login.php', data )
+
+def LoginToPixiv():
+    data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % ( CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'] )
+    return Get( 'http://www.pixiv.net/login.php', data )
+
 
 
 # 输出文件
@@ -86,8 +87,8 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 def FetchPixiv(mode):
     global ITEMS
 
-    # 先登录
-    # LoginToPixiv()
+    # 先登录(r18需要登录才能抓)
+    LoginToPixiv()
 
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
@@ -193,13 +194,21 @@ if __name__ == '__main__':
             mode = sys.argv[2]
 
             # 验证分类
-            if mode == 'daily' : title = '总'
-            elif mode == 'weekly' : title = '本周'
-            elif mode == 'monthly' : title = '本月'
+            if mode == 'daily' : title = '每日'
+            elif mode == 'weekly' : title = '每周'
+            elif mode == 'monthly' : title = '每月'
             elif mode == 'rookie' : title = '新人'
             elif mode == 'original' : title = '原创'
             elif mode == 'male' : title = '受男性欢迎的作品'
             elif mode == 'female' : title = '受女性欢迎的作品'
+
+            # r18
+            elif mode == 'daily_r18' : title = '每日R-18'
+            elif mode == 'weekly_r18' : title = '每周R-18'
+            elif mode == 'male_r18' : title = '男性向R-18'
+            elif mode == 'female_r18' : title = '女性向R-18'
+            elif mode == 'r18g' : title = '每日R-18G'
+
             else:
                 print 'Unknown Mode'
                 exit(1)
