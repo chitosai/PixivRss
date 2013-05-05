@@ -199,8 +199,8 @@ if __name__ == '__main__':
             elif mode == 'monthly' : title = '每月'
             elif mode == 'rookie' : title = '新人'
             elif mode == 'original' : title = '原创'
-            elif mode == 'male' : title = '受男性欢迎的作品'
-            elif mode == 'female' : title = '受女性欢迎的作品'
+            elif mode == 'male' : title = '男性向作品'
+            elif mode == 'female' : title = '女性向作品'
 
             # r18
             elif mode == 'daily_r18' : title = '每日R-18'
