@@ -119,12 +119,10 @@ def FetchPixiv(mode):
                     <title>%s</title>
                     <link>%s</link>
                     <description>%s</description>
-                    <content:encoded>%s</content:encoded>
                     <pubDate>%s</pubDate>
         　　       </item>''' % (
             image[2], 
             'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[1], 
-            desc,
             desc,
             FormatTime(image[6])))
 
@@ -165,7 +163,7 @@ def GenerateRSS(mode, title):
         else:
             real_total = total
 
-        RSS = '''<rss version="2.0" encoding="utf-8" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+        RSS = '''<rss version="2.0" encoding="utf-8">
         <channel><title>Pixiv%s排行 - 前%s</title>
     　　<link>http://rakuen.thec.me/PixivRss/</link>
     　　<description>就算是排行也要订阅啊混蛋！</description>
