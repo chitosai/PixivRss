@@ -119,7 +119,7 @@ def FetchPixiv(mode):
     for image in m:
         # 生成RSS中的item
         desc = '<![CDATA[<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>]]>' % image[1]
+        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>]]>' % image[0]
         ITEMS.append('''<item>
                     <title>%s</title>
                     <link>%s</link>
