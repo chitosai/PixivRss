@@ -17,6 +17,10 @@ ABS_PATH = sys.path[0] + SLASH
 
 ITEMS = []
 
+# 正则
+# regx = '<a class="image-thumbnail" href="[^"]+"><img class="ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="http://source\.pixiv\.net/source/images/common/transparent\.gif"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">阅览数</dt><dd>(\d+)</dd><dt class="score">总分</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">投稿日期</dt><dd>(.+?)</dd></dl>'
+regx = '<a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)" class="work"><img src="([^"]+)" class="_thumbnail"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=\d+&amp;ref=rn-b-2-title" class="title">(.+?)</a></h2><a href="[^"]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="http://source\.pixiv\.net/source/images/common/transparent\.gif" height="32"><span class="icon-text">(.+?)</span></a><dl class="inline-list slash-separated"><dt>阅览数</dt><dd>(\d+)</dd><dt>总分</dt><dd>(\d+)</dd></dl><dl class="inline-list"><dt>投稿日期</dt><dd>(.+?)</dd></dl>'
+
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
     date = datetime.datetime.strptime(time_original, format_original)
@@ -94,7 +98,7 @@ def FetchPixiv(mode):
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
     # 查找所需信息
-    m = re.findall('<a class="image-thumbnail" href="[^"]+"><img class="ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="http://source\.pixiv\.net/source/images/common/transparent\.gif"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">阅览数</dt><dd>(\d+)</dd><dt class="score">总分</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">投稿日期</dt><dd>(.+?)</dd></dl>', html)
+    m = re.findall(regx, html)
     
     # 检查一下匹配结果
     if not len(m):
@@ -123,12 +127,12 @@ def FetchPixiv(mode):
                     <pubDate>%s</pubDate>
         　　       </item>''' % (
             image[2], 
-            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[1], 
+            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[0], 
             desc,
             FormatTime(image[6])))
 
         # 下载预览图...
-        download( PREVIEW_PATH + image[1] + '.jpg', image[0] )
+        download( PREVIEW_PATH + image[0] + '.jpg', image[1] )
 
         # # 只有男性排行抓图大图回来
         # if mode != 'male': continue
