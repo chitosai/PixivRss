@@ -120,10 +120,10 @@ def FetchPixiv(mode):
         # 生成RSS中的item
         desc  = '<![CDATA['
         desc += '<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>'
+        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % image[0]
         # 量子统计的图片
         desc += '<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
-        desc += ']]>' % image[0]
+        desc += ']]>' 
         ITEMS.append('''<item>
                     <title>%s</title>
                     <link>%s</link>
