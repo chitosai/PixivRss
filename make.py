@@ -90,14 +90,16 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 # 抓pixiv页面
 def FetchPixiv(mode):
     debug('Processing: FetchPixiv')
-    global ITEMS
+    global ITEMS, DEBUG
 
     # 获取排行
-    html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
-    # download('a.html', 'http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
+    download('ranking.html', 'http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
+    f = open('ranking.html', 'r')
+    html = f.read()
+    f.close()
 
     # 查找所需信息
-    data = ParseHTML(html)
+    data = ParseHTML(html.decode('utf-8'))
     
     # 检查一下匹配结果
     if not len(data):
@@ -118,13 +120,18 @@ def FetchPixiv(mode):
     count = 0
     for image in data:
         # 生成RSS中的item
-        desc  = '<![CDATA['
-        desc += '<p>画师：%s - 上传于：%s - 阅览数：%s - 总评分：%s</p>' % ( image['author'], image['date'], image['view'], image['score'] );
-        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % image['id']
+        desc  = u'<![CDATA['
+        desc += u'<p>画师：' + image['author']
+        desc += u' - 上传于：' + image['date']
+        desc += u' - 阅览数：' + image['view']
+        desc += u' - 总评分：' + image['score']
+        desc += u'</p>'
+        desc += u'<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % image['id']
         # 量子统计的图片
-        desc += '<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
-        desc += ']]>' 
-        ITEMS.append('''<item>
+        desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
+        desc += u']]>' 
+
+        ITEMS.append(u'''<item>
                     <title>%s</title>
                     <link>%s</link>
                     <description>%s</description>
@@ -139,6 +146,8 @@ def FetchPixiv(mode):
 
         debug('processing: ' + str(count))
         count += 1
+        # DEBUG模式下只处理3个条目就输出
+        if DEBUG and count > 3 : return
 
         # 下载预览图...
         download( PREVIEW_PATH + image['id'] + '.jpg', image['preview'] )
@@ -178,13 +187,13 @@ def ParseHTML(html):
 
     for section in sections:
         item = {}
-        item['ranking'] = J(section).attr['data-rank'].encode('utf-8')
-        item['title'] = J(section).attr['data-title'].encode('utf-8')
-        item['author'] = J(section).attr['data-user-name'].encode('utf-8')
-        item['date'] = J(section).attr['data-date'].encode('utf-8')
-        item['view'] = J(section).attr['data-view-count'].encode('utf-8')
-        item['score'] = J(section).attr['data-total-score'].encode('utf-8')
-        item['preview'] = J(section).find('img._thumbnail').attr['data-src']
+        item['ranking'] = J(section).attr('data-rank')
+        item['title'] = J(section).attr('data-title')
+        item['author'] = J(section).attr('data-user-name')
+        item['date'] = J(section).attr('data-date')
+        item['view'] = J(section).attr('data-view-count')
+        item['score'] = J(section).attr('data-total-score')
+        item['preview'] = J(section).find('img._thumbnail').attr('data-src')
 
         m = re.search('&illust_id=(\d+)&', J(section).children('a.work').attr['href'])
         item['id'] = m.group(1)
@@ -207,7 +216,7 @@ def GenerateRSS(mode, title):
         else:
             real_total = total
 
-        RSS = '''<rss version="2.0" encoding="utf-8">
+        RSS = u'''<rss version="2.0" encoding="utf-8">
         <channel><title>Pixiv%s排行 - 前%s</title>
     　　<link>http://rakuen.thec.me/PixivRss/</link>
     　　<description>就算是排行也要订阅啊混蛋！</description>
@@ -220,17 +229,18 @@ def GenerateRSS(mode, title):
         for i in range(real_total):
             RSS += ITEMS[i]
 
-        RSS += '''</channel></rss>'''
+        RSS += u'''</channel></rss>'''
 
         # 输出到文件
         RSS_PATH = ABS_PATH + 'rss' + SLASH
         f = open(RSS_PATH + mode + '-' + str(total) + '.xml', 'w')
-        f.write(RSS)
+        f.write(RSS.encode('utf-8'))
         f.close
 
 
 # DEBUG
 def debug(message):
+    global DEBUG
     if not DEBUG : return
     print message
 
@@ -243,20 +253,20 @@ if __name__ == '__main__':
             mode = sys.argv[2]
 
             # 验证分类
-            if mode == 'daily' : title = '每日'
-            elif mode == 'weekly' : title = '每周'
-            elif mode == 'monthly' : title = '每月'
-            elif mode == 'rookie' : title = '新人'
-            elif mode == 'original' : title = '原创'
-            elif mode == 'male' : title = '男性向作品'
-            elif mode == 'female' : title = '女性向作品'
+            if mode == 'daily' : title = u'每日'
+            elif mode == 'weekly' : title = u'每周'
+            elif mode == 'monthly' : title = u'每月'
+            elif mode == 'rookie' : title = u'新人'
+            elif mode == 'original' : title = u'原创'
+            elif mode == 'male' : title = u'男性向作品'
+            elif mode == 'female' : title = u'女性向作品'
 
             # r18
-            elif mode == 'daily_r18' : title = '每日R-18'
-            elif mode == 'weekly_r18' : title = '每周R-18'
-            elif mode == 'male_r18' : title = '男性向R-18'
-            elif mode == 'female_r18' : title = '女性向R-18'
-            elif mode == 'r18g' : title = '每日R-18G'
+            elif mode == 'daily_r18' : title = u'每日R-18'
+            elif mode == 'weekly_r18' : title = u'每周R-18'
+            elif mode == 'male_r18' : title = u'男性向R-18'
+            elif mode == 'female_r18' : title = u'女性向R-18'
+            elif mode == 'r18g' : title = u'每日R-18G'
 
             else:
                 print 'Unknown Mode'
