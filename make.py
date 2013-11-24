@@ -82,7 +82,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     data = Get(url, refer = refer)
 
     # 写入
-    f = open(fname, 'wb')
+    f = open(fname, 'w')
     f.write(data)
     f.close()
 
@@ -93,10 +93,7 @@ def FetchPixiv(mode):
     global ITEMS, DEBUG
 
     # 获取排行
-    download('ranking.html', 'http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
-    f = open('ranking.html', 'r')
-    html = f.read()
-    f.close()
+    html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
     # 查找所需信息
     data = ParseHTML(html.decode('utf-8'))
