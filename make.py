@@ -10,6 +10,9 @@ CONFIG = {
     'PIXIV_PASS' : '111000'
 }
 
+# 是否开启DEBUG模式
+DEBUG = False
+
 # 分隔符
 if platform.system() == 'Windows': SLASH = '\\'
 else: SLASH = '/'
@@ -63,6 +66,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
 
 
 def LoginToPixiv():
+    debug('Processing: LoginToPixiv')
     data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % ( CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'] )
     return Get( 'http://www.pixiv.net/login.php', data )
 
@@ -85,6 +89,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 
 # 抓pixiv页面
 def FetchPixiv(mode):
+    debug('Processing: FetchPixiv')
     global ITEMS
 
     # 获取排行
@@ -110,6 +115,7 @@ def FetchPixiv(mode):
     #         if image == '.gitignore' : continue
     #         os.remove( IMAGE_PATH + image )
 
+    count = 0
     for image in data:
         # 生成RSS中的item
         desc  = '<![CDATA['
@@ -130,6 +136,9 @@ def FetchPixiv(mode):
             image['date']
             )
         )
+
+        debug('processing: ' + str(count))
+        count += 1
 
         # 下载预览图...
         download( PREVIEW_PATH + image['id'] + '.jpg', image['preview'] )
@@ -157,6 +166,7 @@ def FetchPixiv(mode):
 
 # 解析网页
 def ParseHTML(html):
+    debug('Processing: ParseHTML')
     doc = J(html)
     sections = doc('section.ranking-item')
 
@@ -187,6 +197,7 @@ def ParseHTML(html):
 
 # 输出rss文件
 def GenerateRSS(mode, title):
+    debug('Processing: GenerateRSS')
     global CONFIG, ITEMS
 
     for total in CONFIG['totals']:
@@ -216,6 +227,12 @@ def GenerateRSS(mode, title):
         f = open(RSS_PATH + mode + '-' + str(total) + '.xml', 'w')
         f.write(RSS)
         f.close
+
+
+# DEBUG
+def debug(message):
+    if not DEBUG : return
+    print message
 
 
     
@@ -253,4 +270,5 @@ if __name__ == '__main__':
             GenerateRSS(mode, title)
     else:
         print 'No params specified'
+
 
