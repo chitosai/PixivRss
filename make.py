@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import urllib2, re, platform, os, sys, time, datetime
 from cookielib import MozillaCookieJar
+from pyquery import PyQuery as J
 
 # 输出的条目类型
 CONFIG = {
@@ -16,11 +17,6 @@ else: SLASH = '/'
 ABS_PATH = sys.path[0] + SLASH
 
 ITEMS = []
-
-# 正则
-# regx = '<a class="image-thumbnail" href="[^"]+"><img class="ui-scroll-view" data-filter="lazy-image" data-src="([^"]+)" src="http://source\.pixiv\.net/source/images/common/transparent\.gif"></a><div class="data"><h2><a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)&amp;ref=[\w\d\-]+">(.+?)</a></h2><a href="member\.php\?id=\d+&amp;ref=[\w\d\-]+" class="user-container"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32">(.+?)</a><dl class="stat"><dt class="view">阅览数</dt><dd>(\d+)</dd><dt class="score">总分</dt><dd>(\d+)</dd></dl><dl class="meta"><dt class="date">投稿日期</dt><dd>(.+?)</dd></dl>'
-regx = '<a href="member_illust\.php\?mode=medium&amp;illust_id=(\d+)[^"]+" class="work"><img src="[^"]+" alt="" class="_thumbnail ui-scroll-view" data-filter="lazy-image"  data-src="([^"]+)"></a><div class="data"><h2><a href="[^"]+" class="title" target="_blank">(.+?)</a></h2><a href="[^"]+" class="user-container" target="_blank"><img class="user-icon ui-scroll-view" data-filter="lazy-image" data-src="[^"]+" src="[^"]+" height="32"><span class="icon-text">(.+?)</span></a><dl class="inline-list slash-separated"><dt>阅览数</dt><dd>(\d+)</dd><dt>总分</dt><dd>(\d+)</dd></dl><dl class="inline-list"><dt>投稿日期</dt><dd>(.+?)</dd></dl>'
-
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
     date = datetime.datetime.strptime(time_original, format_original)
@@ -91,18 +87,15 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 def FetchPixiv(mode):
     global ITEMS
 
-    # 先登录(r18需要登录才能抓)
-    LoginToPixiv()
-
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
     # download('a.html', 'http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
     # 查找所需信息
-    m = re.findall(regx, html)
+    data = ParseHTML(html)
     
     # 检查一下匹配结果
-    if not len(m):
+    if not len(data):
         print 'failed to get ranking list info'
         return
 
@@ -117,11 +110,11 @@ def FetchPixiv(mode):
     #         if image == '.gitignore' : continue
     #         os.remove( IMAGE_PATH + image )
 
-    for image in m:
+    for image in data:
         # 生成RSS中的item
         desc  = '<![CDATA['
-        desc += '<p>画师：' + image[3] + ' - 上传于：' + image[6] + ' - 阅览数：' + image[4] + ' - 总评分：' + image[5] + '</p>';
-        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % image[0]
+        desc += '<p>画师：%s - 上传于：%s - 阅览数：%s - 总评分：%s</p>' % ( image['author'], image['date'], image['view'], image['score'] );
+        desc += '<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % image['id']
         # 量子统计的图片
         desc += '<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
         desc += ']]>' 
@@ -131,13 +124,15 @@ def FetchPixiv(mode):
                     <description>%s</description>
                     <pubDate>%s</pubDate>
         　　       </item>''' % (
-            image[2], 
-            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image[0], 
+            image['title'], 
+            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id'], 
             desc,
-            FormatTime(image[6])))
+            image['date']
+            )
+        )
 
         # 下载预览图...
-        download( PREVIEW_PATH + image[0] + '.jpg', image[1] )
+        download( PREVIEW_PATH + image['id'] + '.jpg', image['preview'] )
 
         # # 只有男性排行抓图大图回来
         # if mode != 'male': continue
@@ -159,7 +154,35 @@ def FetchPixiv(mode):
         # 暂停一下试试
         time.sleep(1)
 
-    
+
+# 解析网页
+def ParseHTML(html):
+    doc = J(html)
+    sections = doc('section.ranking-item')
+
+    if not len(sections):
+        print 'CAN\'T FIND SECTION'
+        return False
+
+    data = []
+
+    for section in sections:
+        item = {}
+        item['ranking'] = J(section).attr['data-rank'].encode('utf-8')
+        item['title'] = J(section).attr['data-title'].encode('utf-8')
+        item['author'] = J(section).attr['data-user-name'].encode('utf-8')
+        item['date'] = J(section).attr['data-date'].encode('utf-8')
+        item['view'] = J(section).attr['data-view-count'].encode('utf-8')
+        item['score'] = J(section).attr['data-total-score'].encode('utf-8')
+        item['preview'] = J(section).find('img._thumbnail').attr['data-src']
+
+        m = re.search('&illust_id=(\d+)&', J(section).children('a.work').attr['href'])
+        item['id'] = m.group(1)
+
+        data.append(item)
+
+    return data
+
 
 
 # 输出rss文件
@@ -221,6 +244,10 @@ if __name__ == '__main__':
             else:
                 print 'Unknown Mode'
                 exit(1)
+
+            # r18排行需要登录
+            if 'r18' in mode:
+                LoginToPixiv()
 
             FetchPixiv(mode)
             GenerateRSS(mode, title)
