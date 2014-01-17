@@ -2,22 +2,16 @@
 import urllib2, re, platform, os, sys, time, datetime
 from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
+from config import *
 
-# 输出的条目类型
-CONFIG = {
-    'totals' : [10, 20, 30, 40, 50],
-    'PIXIV_USER' : 'pixivrss@sina.com',
-    'PIXIV_PASS' : '111000'
-}
-
-# 是否开启DEBUG模式
-DEBUG = True
+import _qiniu
 
 # 分隔符
 if platform.system() == 'Windows': SLASH = '\\'
 else: SLASH = '/'
 
 ABS_PATH = sys.path[0] + SLASH
+IMAGE_PATH = ABS_PATH + 'images' + SLASH 
 
 ITEMS = []
 
@@ -84,7 +78,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     data = Get(url, refer = refer)
 
     # 写入
-    f = open(fname, 'w')
+    f = open(fname, 'wb')
     f.write(data)
     f.close()
 
@@ -105,11 +99,12 @@ def FetchPixiv(mode):
         print 'failed to get ranking list info'
         return
 
-    # 准备下载图
-    IMAGE_PATH = ABS_PATH + 'images' + SLASH
-
     count = 0
     for image in data:
+        count += 1
+        # DEBUG模式下只处理3个条目就输出
+        if DEBUG and count > 3 : return
+
         # 生成RSS中的item
         desc  = u'<![CDATA['
         desc += u'<p>画师：' + image['author']
@@ -129,16 +124,14 @@ def FetchPixiv(mode):
                     <pubDate>%s</pubDate>
         　　       </item>''' % (
             image['title'], 
-            escape('http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id']), 
+            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id'], 
             desc,
             image['date']
             )
         )
 
-        debug('processing: ' + str(count))
-        count += 1
-        # DEBUG模式下只处理3个条目就输出
-        if DEBUG and count > 3 : return
+        debug('Starting: ' + str(count))
+        debug('processing: pixiv_id: ' + str(image['id']))
 
         # 下载大图
         img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'],
@@ -151,10 +144,22 @@ def FetchPixiv(mode):
         else:
             img_url = img_m.group(1)
         
+        f = IMAGE_PATH + image['id'] + '.jpg'
+
         # 保存大图
-        download( IMAGE_PATH + image['id'] + '.jpg', img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'] )
+        debug('Processing: downloading fullsize image')
+        download( f, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'] )
+
+        # 上传到七牛
+        debug('Processing: uploading to qiniu')
+        _qiniu.upload(f)
+
+        # 删除大图
+        debug('Processing: delete fullsize image')
+        # os.remove(f)
 
         # 暂停一下试试
+        debug('Waiting: ---\n')
         time.sleep(1)
 
 
@@ -263,5 +268,3 @@ if __name__ == '__main__':
             GenerateRSS(mode, title)
     else:
         print 'No params specified'
-
-
