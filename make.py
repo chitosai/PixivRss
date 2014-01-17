@@ -28,6 +28,8 @@ def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
 def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
 
+def escape( text ):
+    return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
 def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
     global ABS_PATH
@@ -135,7 +137,7 @@ def FetchPixiv(mode):
                     <pubDate>%s</pubDate>
         　　       </item>''' % (
             image['title'], 
-            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id'], 
+            escape('http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id']), 
             desc,
             image['date']
             )
