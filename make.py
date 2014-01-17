@@ -11,7 +11,7 @@ CONFIG = {
 }
 
 # 是否开启DEBUG模式
-DEBUG = False
+DEBUG = True
 
 # 分隔符
 if platform.system() == 'Windows': SLASH = '\\'
@@ -106,15 +106,7 @@ def FetchPixiv(mode):
         return
 
     # 准备下载图
-    PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
-    # IMAGE_PATH = ABS_PATH + 'images' + SLASH
-
-    # 清理现有大图
-    # if mode == 'male' : 
-    #     image_list = os.listdir(IMAGE_PATH)
-    #     for image in image_list:
-    #         if image == '.gitignore' : continue
-    #         os.remove( IMAGE_PATH + image )
+    IMAGE_PATH = ABS_PATH + 'images' + SLASH
 
     count = 0
     for image in data:
@@ -148,25 +140,19 @@ def FetchPixiv(mode):
         # DEBUG模式下只处理3个条目就输出
         if DEBUG and count > 3 : return
 
-        # 下载预览图...
-        download( PREVIEW_PATH + image['id'] + '.jpg', image['preview'] )
+        # 下载大图
+        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'],
+                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + image['id'])
+        img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
 
-        # # 只有男性排行抓图大图回来
-        # if mode != 'male': continue
-
-        # # 和大图
-        # img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image[1],
-        #                          refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + image[1])
-        # img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
-
-        # if not img_m:
-        #     print 'Can\'t find big image url'
-        #     return
-        # else:
-        #     img_url = img_m.group(1)
+        if not img_m:
+            print 'Can\'t find big image url'
+            return
+        else:
+            img_url = img_m.group(1)
         
-        # # 保存大图
-        # download( IMAGE_PATH + image[1] + '.jpg', img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image[1] )
+        # 保存大图
+        download( IMAGE_PATH + image['id'] + '.jpg', img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'] )
 
         # 暂停一下试试
         time.sleep(1)
@@ -271,10 +257,8 @@ if __name__ == '__main__':
                 print 'Unknown Mode'
                 exit(1)
 
-            # r18排行需要登录
-            if 'r18' in mode:
-                LoginToPixiv()
-
+            
+            # LoginToPixiv()
             FetchPixiv(mode)
             GenerateRSS(mode, title)
     else:
