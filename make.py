@@ -12,6 +12,7 @@ else: SLASH = '/'
 
 ABS_PATH = sys.path[0] + SLASH
 IMAGE_PATH = ABS_PATH + 'images' + SLASH 
+LOG_PATH = ABS_PATH + 'log' + SLASH
 
 ITEMS = []
 
@@ -78,9 +79,12 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     data = Get(url, refer = refer)
 
     # 写入
-    f = open(fname, 'wb')
-    f.write(data)
-    f.close()
+    try:
+        f = open(fname, 'w+')
+        f.write(data)
+        f.close()
+    except Exception, err:
+        log(url, err)
 
 
 # 抓pixiv页面
@@ -102,6 +106,8 @@ def FetchPixiv(mode):
     count = 0
     for image in data:
         count += 1
+        pixiv_id = image['id']
+
         # DEBUG模式下只处理3个条目就输出
         if DEBUG and count > 3 : return
 
@@ -112,7 +118,7 @@ def FetchPixiv(mode):
         desc += u' - 阅览数：' + image['view']
         desc += u' - 总评分：' + image['score']
         desc += u'</p>'
-        desc += u'<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % image['id']
+        desc += u'<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % pixiv_id
         # 量子统计的图片
         desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
         desc += u']]>' 
@@ -124,18 +130,18 @@ def FetchPixiv(mode):
                     <pubDate>%s</pubDate>
         　　       </item>''' % (
             image['title'], 
-            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id'], 
+            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id, 
             desc,
             image['date']
             )
         )
 
         debug('Starting: ' + str(count))
-        debug('processing: pixiv_id: ' + str(image['id']))
+        debug('processing: pixiv_id: ' + str(pixiv_id))
 
         # 下载大图
-        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'],
-                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + image['id'])
+        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id,
+                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
         img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
 
         if not img_m:
@@ -144,15 +150,17 @@ def FetchPixiv(mode):
         else:
             img_url = img_m.group(1)
         
-        f = IMAGE_PATH + image['id'] + '.jpg'
+        f = IMAGE_PATH + pixiv_id + '.jpg'
 
         # 保存大图
         debug('Processing: downloading fullsize image')
-        download( f, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + image['id'] )
+        download( f, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
 
         # 上传到七牛
         debug('Processing: uploading to qiniu')
-        _qiniu.upload(f)
+        r = _qiniu.upload(f)
+        if r != True:
+            log(pixiv_id, r)
 
         # 删除大图
         debug('Processing: delete fullsize image')
@@ -233,6 +241,16 @@ def debug(message):
     global DEBUG
     if not DEBUG : return
     print message
+
+
+def log(pixiv_id, message):
+    try:
+        f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'a+')
+    except:
+        f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'w+')
+    finally:
+        f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + pixiv_id + ', ' + str(message) + '\n' )
+        f.close()
 
 
     

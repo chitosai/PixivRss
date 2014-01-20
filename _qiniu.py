@@ -26,6 +26,4 @@ def upload(f):
     # 上传
     ret, err = qiniu.io.put_file(uptoken, f, f)
 
-    if err is not None:
-        sys.stderr.write('error: %s \n' % err)        
-        return
+    return True
