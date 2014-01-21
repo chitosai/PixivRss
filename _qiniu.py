@@ -18,12 +18,12 @@ class PutPolicy(object):
     def __init__(self, scope):
         self.scope = scope
 
-def upload(f):
+def upload(file_path, file_name):
     # 获取上传凭证
     policy = qiniu.rs.PutPolicy(qiniu.conf.BUCKET_NAME)
     uptoken = policy.token()
 
     # 上传
-    ret, err = qiniu.io.put_file(uptoken, f, f)
+    ret, err = qiniu.io.put_file(uptoken, file_name, file_path)
 
     return True

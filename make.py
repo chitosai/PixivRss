@@ -113,6 +113,46 @@ def FetchPixiv(mode):
         # DEBUG模式下只处理3个条目就输出
         if DEBUG and count > 3 : return
 
+        debug('Starting: ' + str(count))
+        debug('processing: pixiv_id: ' + str(pixiv_id))
+
+        # 下载大图
+        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id,
+                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
+        img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
+
+        if not img_m:
+            log(pixiv_id, 'Can\'t find big image url')
+            return
+        else:
+            img_url = img_m.group(1)
+        
+        file_name_m = re.search('\d+\.(?:gif|jpg|jpeg|png)', img_url)
+        if not file_name_m:
+            log(pixiv_id, 'Can\'t parse file name')
+            return
+        else:
+            file_name = file_name_m.group(0)
+
+        file_path = IMAGE_PATH + file_name
+
+        # 保存大图
+        debug('Processing: downloading fullsize image')
+        r = download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
+        if not r:
+            log(pixiv_id, 'unable to get %s, skipped' % file_name)
+            continue
+
+        # 上传到七牛
+        debug('Processing: uploading to qiniu')
+        r = _qiniu.upload(file_name, file_path)
+        if r != True:
+            log(pixiv_id, r)
+
+        # 删除大图
+        debug('Processing: delete fullsize image')
+        # os.remove(file_path)
+        
         # 生成RSS中的item
         desc  = u'<![CDATA['
         desc += u'<p>画师：' + image['author']
@@ -120,7 +160,7 @@ def FetchPixiv(mode):
         desc += u' - 阅览数：' + image['view']
         desc += u' - 总评分：' + image['score']
         desc += u'</p>'
-        desc += u'<p><img src="http://rakuen.thec.me/PixivRss/previews/%s.jpg"></p>' % pixiv_id
+        desc += u'<p><img src="http://rakuen.thec.me/PixivRss/previews/%s"></p>' % file_name
         # 量子统计的图片
         desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
         desc += u']]>' 
@@ -137,39 +177,6 @@ def FetchPixiv(mode):
             image['date']
             )
         )
-
-        debug('Starting: ' + str(count))
-        debug('processing: pixiv_id: ' + str(pixiv_id))
-
-        # 下载大图
-        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id,
-                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
-        img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
-
-        if not img_m:
-            print 'Can\'t find big image url'
-            return
-        else:
-            img_url = img_m.group(1)
-        
-        f = IMAGE_PATH + pixiv_id + '.jpg'
-
-        # 保存大图
-        debug('Processing: downloading fullsize image')
-        r = download( f, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
-        if not r:
-            log(pixiv_id, 'unable to get %s, skipped' % img_url)
-            continue
-
-        # 上传到七牛
-        debug('Processing: uploading to qiniu')
-        r = _qiniu.upload(f)
-        if r != True:
-            log(pixiv_id, r)
-
-        # 删除大图
-        debug('Processing: delete fullsize image')
-        # os.remove(f)
 
         # 暂停一下试试
         debug('Waiting: ---\n')
