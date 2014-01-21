@@ -83,8 +83,10 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
         f = open(fname, 'w+')
         f.write(data)
         f.close()
+        return True
     except Exception, err:
         log(url, err)
+        return False
 
 
 # 抓pixiv页面
@@ -154,7 +156,10 @@ def FetchPixiv(mode):
 
         # 保存大图
         debug('Processing: downloading fullsize image')
-        download( f, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
+        r = download( f, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
+        if not r:
+            log(pixiv_id, 'unable to get %s, skipped' % img_url)
+            continue
 
         # 上传到七牛
         debug('Processing: uploading to qiniu')
