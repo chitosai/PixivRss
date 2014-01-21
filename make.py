@@ -2,6 +2,7 @@
 
 from utility import *
 
+import pchan
 import _qiniu
 
 ITEMS = []
@@ -103,6 +104,13 @@ def FetchPixiv(mode):
             r = _qiniu.upload(file_name, file_path)
             if r != True:
                 log(pixiv_id, r)
+
+            # 每日排行发微博
+            if mode == 'daily':
+                debug('Processing: posting weibo')
+                weibo_text = u'每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s' \
+                                % (count, image['author'], image['title'], 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id)
+                pchan.post(weibo_text, file_path)
 
             # 删除大图
             debug('Processing: delete temp image')
