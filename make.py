@@ -52,7 +52,7 @@ def FetchPixiv(mode):
         # 解析大图地址
         if not img_m:
             log(pixiv_id, 'Can\'t find fullsize image url')
-            return
+            continue
         else:
             img_url = img_m.group(1)
         
@@ -60,7 +60,7 @@ def FetchPixiv(mode):
         file_name_m = re.search('\d+\.(?:gif|jpg|jpeg|png)', img_url)
         if not file_name_m:
             log(pixiv_id, 'Can\'t parse file name')
-            return
+            continue
         else:
             file_name = file_name_m.group(0)
 
@@ -72,11 +72,7 @@ def FetchPixiv(mode):
 
             # 保存大图
             debug('Processing: downloading fullsize image : ' + img_url)
-            r = download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
-            if not r:
-                log(pixiv_id, 'unable to get %s, skipped' % file_name)
-                time.sleep(1)
-                continue
+            download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
 
             # 上传到七牛
             debug('Processing: uploading to qiniu')
@@ -220,7 +216,7 @@ if __name__ == '__main__':
 
             if 'r18' in mode:
                 LoginToPixiv()
-                
+
             FetchPixiv(mode)
             GenerateRSS(mode, title)
     else:

@@ -55,14 +55,14 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
         return res.read()
 
     except:
-        print 'unable to get ' + url
+        print 'Error: unable to get ' + url
         return
 
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     # 检查文件是否存在
     if os.path.exists(fname):
-        return False
+        return
 
     # 下载
     data = Get(url, refer = refer)
