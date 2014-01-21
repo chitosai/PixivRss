@@ -1,98 +1,25 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, platform, os, sys, time, datetime
-from cookielib import MozillaCookieJar
-from pyquery import PyQuery as J
-from config import *
+
+from utility import *
 
 import _qiniu
 
-# 分隔符
-if platform.system() == 'Windows': SLASH = '\\'
-else: SLASH = '/'
-
-ABS_PATH = sys.path[0] + SLASH
-IMAGE_PATH = ABS_PATH + 'images' + SLASH 
-LOG_PATH = ABS_PATH + 'log' + SLASH
-
 ITEMS = []
-
-def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
-    date = datetime.datetime.strptime(time_original, format_original)
-    return date.strftime('%a, %d %b %Y %H:%M:%S +8000')
-
-def GetCurrentTime():
-    return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
-
-def escape( text ):
-    return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-
-def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
-    global ABS_PATH
-    try:
-        cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
-
-        try :
-            cj.load( ABS_PATH + 'pixiv.cookie.txt' )
-        except:
-            pass # 还没有cookie只好拉倒咯
-
-        ckproc = urllib2.HTTPCookieProcessor( cj )
-
-        opener = urllib2.build_opener( ckproc )
-        opener.addheaders = [
-            ('Accept-Language', 'zh-CN,zh;q=0.8'),
-            ('Accept-Charset', 'UTF-8,*;q=0.5'),
-            ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31'),
-            ('Referer', refer)
-        ]
-
-        if data != '':
-            request = urllib2.Request( url = url, data = data )
-            res = opener.open( request )
-            cj.save() # 只有在post时才保存新获得的cookie
-        else:
-            res = opener.open( url )
-
-        res = opener.open(url)
-        return res.read()
-
-    except:
-        print 'unable to get ' + url
-        return
-
-
 
 def LoginToPixiv():
     debug('Processing: LoginToPixiv')
     data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % ( CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'] )
     return Get( 'http://www.pixiv.net/login.php', data )
 
-
-
-# 输出文件
-def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
-    # 检查文件是否存在
-    if os.path.exists(fname) : 
-        return
-
-    # 下载
-    data = Get(url, refer = refer)
-
-    # 写入
-    try:
-        f = open(fname, 'w+')
-        f.write(data)
-        f.close()
-        return True
-    except Exception, err:
-        log(url, err)
-        return False
-
-
 # 抓pixiv页面
 def FetchPixiv(mode):
     debug('Processing: FetchPixiv')
     global ITEMS, DEBUG
+
+    # 读取已下载的图片列表
+    exist_file = open(EXIST_FILE, 'r')
+    exist_list = json.load(exist_file)
+    exist_file.close()
 
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
@@ -108,10 +35,11 @@ def FetchPixiv(mode):
     count = 0
     for image in data:
         count += 1
-        pixiv_id = image['id']
 
-        # DEBUG模式下只处理3个条目就输出
+        # DEBUG模式下只处理3个条目就退出
         if DEBUG and count > 3 : return
+
+        pixiv_id = image['id']
 
         debug('Starting: ' + str(count))
         debug('processing: pixiv_id: ' + str(pixiv_id))
@@ -121,12 +49,14 @@ def FetchPixiv(mode):
                                  refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
         img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
 
+        # 解析大图地址
         if not img_m:
-            log(pixiv_id, 'Can\'t find big image url')
+            log(pixiv_id, 'Can\'t find fullsize image url')
             return
         else:
             img_url = img_m.group(1)
         
+        # 解析大图文件名
         file_name_m = re.search('\d+\.(?:gif|jpg|jpeg|png)', img_url)
         if not file_name_m:
             log(pixiv_id, 'Can\'t parse file name')
@@ -134,24 +64,42 @@ def FetchPixiv(mode):
         else:
             file_name = file_name_m.group(0)
 
-        file_path = IMAGE_PATH + file_name
+        # 检查是否已存在
+        # 不存在，需要下载：
+        if file_name not in exist_list:
 
-        # 保存大图
-        debug('Processing: downloading fullsize image')
-        r = download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
-        if not r:
-            log(pixiv_id, 'unable to get %s, skipped' % file_name)
-            continue
+            file_path = TEMP_PATH + file_name
 
-        # 上传到七牛
-        debug('Processing: uploading to qiniu')
-        r = _qiniu.upload(file_name, file_path)
-        if r != True:
-            log(pixiv_id, r)
+            # 保存大图
+            debug('Processing: downloading fullsize image : ' + img_url)
+            r = download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
+            if not r:
+                log(pixiv_id, 'unable to get %s, skipped' % file_name)
+                time.sleep(1)
+                continue
 
-        # 删除大图
-        debug('Processing: delete fullsize image')
-        # os.remove(file_path)
+            # 上传到七牛
+            debug('Processing: uploading to qiniu')
+            r = _qiniu.upload(file_name, file_path)
+            if r != True:
+                log(pixiv_id, r)
+
+            # 删除大图
+            debug('Processing: delete fullsize image')
+            os.remove(file_path)
+            
+            # 写入list
+            exist_list.append(file_name)
+            # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
+            debug('Processing: update exist file')
+            exist_json = json.dumps(exist_list)
+            exist_file = open(EXIST_FILE, 'w')
+            exist_file.write(exist_json)
+            exist_file.close()
+        
+        # 已存在
+        else:
+            debug('Duplicated: Image alreay exists')
         
         # 生成RSS中的item
         desc  = u'<![CDATA['
@@ -182,7 +130,6 @@ def FetchPixiv(mode):
         debug('Waiting: ---\n')
         time.sleep(1)
 
-
 # 解析网页
 def ParseHTML(html):
     debug('Processing: ParseHTML')
@@ -211,8 +158,6 @@ def ParseHTML(html):
         data.append(item)
 
     return data
-
-
 
 # 输出rss文件
 def GenerateRSS(mode, title):
@@ -247,25 +192,6 @@ def GenerateRSS(mode, title):
         f.write(RSS.encode('utf-8'))
         f.close
 
-
-# DEBUG
-def debug(message):
-    global DEBUG
-    if not DEBUG : return
-    print message
-
-
-def log(pixiv_id, message):
-    try:
-        f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'a+')
-    except:
-        f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'w+')
-    finally:
-        f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + pixiv_id + ', ' + str(message) + '\n' )
-        f.close()
-
-
-    
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         param = sys.argv[1]
@@ -292,8 +218,9 @@ if __name__ == '__main__':
                 print 'Unknown Mode'
                 exit(1)
 
-            
-            # LoginToPixiv()
+            if 'r18' in mode:
+                LoginToPixiv()
+                
             FetchPixiv(mode)
             GenerateRSS(mode, title)
     else:

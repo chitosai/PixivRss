@@ -18,7 +18,7 @@ class PutPolicy(object):
     def __init__(self, scope):
         self.scope = scope
 
-def upload(file_path, file_name):
+def upload(file_name, file_path):
     # 获取上传凭证
     policy = qiniu.rs.PutPolicy(qiniu.conf.BUCKET_NAME)
     uptoken = policy.token()
