@@ -25,7 +25,7 @@ def FetchPixiv(mode):
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
     # 查找所需信息
-    data = ParseHTML(html.decode('utf-8'))
+    data = ParseRankingPage(html.decode('utf-8'))
     
     # 检查一下匹配结果
     if not len(data):
@@ -44,34 +44,58 @@ def FetchPixiv(mode):
         debug('Starting: ' + str(count))
         debug('processing: pixiv_id: ' + str(pixiv_id))
 
-        # 下载大图
-        img_page = Get('http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id,
-                                 refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
-        img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
-
-        # 解析大图地址
-        if not img_m:
-            log(pixiv_id, 'Can\'t find fullsize image url')
-            continue
-        else:
-            img_url = img_m.group(1)
-        
-        # 解析大图文件名
-        file_name_m = re.search('\d+\.(?:gif|jpg|jpeg|png)', img_url)
-        if not file_name_m:
-            log(pixiv_id, 'Can\'t parse file name')
-            continue
-        else:
-            file_name = file_name_m.group(0)
-
         # 检查是否已存在
         # 不存在，需要下载：
-        if file_name not in exist_list:
+        if pixiv_id not in exist_list:
+
+            # 直接下载medium页面的图
+            html = Get('http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
+
+            # 解析图片地址
+            doc = J(html)
+            img = doc('.works_display img')
+
+            if not len(img):
+                log(pixiv_id, 'ERROR: CAN\'T FIND IMAGE in medium page')
+                continue
+
+            img_url = J(img).attr('src')
+            debug('Processing: find image url: ' + img_url)
+
+            # # 访问medium页面，查找大图页面地址
+            # medium_page = Get('http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
+            # large_page = re.search('member_illust\.php\?mode=(manga|big)&amp;illust_id=\d+', medium_page)
+            # if not large_page:
+            #     log(pixiv_id, 'Can\'t find big_page url')
+            #     continue
+            # else:
+            #     large_type = large_page.group(1)
+
+            # # 下载大图
+            # img_page = Get('http://www.pixiv.net/member_illust.php?mode=%s&illust_id=%s' % (large_type, pixiv_id),
+            #                          refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
+            # img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
+
+            # # 解析大图地址
+            # if not img_m:
+            #     log(pixiv_id, 'Can\'t find fullsize image url')
+            #     continue
+            # else:
+            #     img_url = img_m.group(1)
+            
+            # 解析图片文件名
+            file_name_m = re.search('\d+\_m.(?:gif|jpg|jpeg|png)', img_url)
+            if not file_name_m:
+                log(pixiv_id, 'Can\'t parse file name')
+                continue
+            else:
+                file_name = file_name_m.group(0)
+                debug('Processing: file name: ' + file_name)
 
             file_path = TEMP_PATH + file_name
 
             # 保存大图
-            debug('Processing: downloading fullsize image : ' + img_url)
+            debug('Processing: downloading temp image')
             download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
 
             # 上传到七牛
@@ -81,11 +105,11 @@ def FetchPixiv(mode):
                 log(pixiv_id, r)
 
             # 删除大图
-            debug('Processing: delete fullsize image')
+            debug('Processing: delete temp image')
             os.remove(file_path)
             
             # 写入list
-            exist_list.append(file_name)
+            exist_list.append(pixiv_id)
             # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
             debug('Processing: update exist file')
             exist_json = json.dumps(exist_list)
@@ -104,7 +128,7 @@ def FetchPixiv(mode):
         desc += u' - 阅览数：' + image['view']
         desc += u' - 总评分：' + image['score']
         desc += u'</p>'
-        desc += u'<p><img src="http://rakuen.thec.me/PixivRss/previews/%s"></p>' % file_name
+        desc += u'<p><img src="http://pixiv.qiniudn.com/%s"></p>' % file_name
         # 量子统计的图片
         desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
         desc += u']]>' 
@@ -123,11 +147,11 @@ def FetchPixiv(mode):
         )
 
         # 暂停一下试试
-        debug('Waiting: ---\n')
+        debug('Waiting: ---\r\n')
         time.sleep(1)
 
-# 解析网页
-def ParseHTML(html):
+# 解析排行页面
+def ParseRankingPage(html):
     debug('Processing: ParseHTML')
     doc = J(html)
     sections = doc('section.ranking-item')
