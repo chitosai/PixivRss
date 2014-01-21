@@ -96,7 +96,7 @@ def FetchPixiv(mode):
 
             # 保存大图
             debug('Processing: downloading temp image')
-            download( file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id )
+            download(file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id)
 
             # 上传到七牛
             debug('Processing: uploading to qiniu')
@@ -109,7 +109,7 @@ def FetchPixiv(mode):
             os.remove(file_path)
             
             # 写入list
-            exist_list.append(pixiv_id)
+            exist_list[pixiv_id] = int(time.time())
             # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
             debug('Processing: update exist file')
             exist_json = json.dumps(exist_list)
