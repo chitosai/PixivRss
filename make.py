@@ -85,12 +85,13 @@ def FetchPixiv(mode):
             #     img_url = img_m.group(1)
             
             # 解析图片文件名
-            file_name_m = re.search('\d+\_m.(?:gif|jpg|jpeg|png)', img_url)
+            file_name_m = re.search('\d+_m\.(gif|jpg|jpeg|png)', img_url)
             if not file_name_m:
                 log(pixiv_id, 'Can\'t parse file name')
                 continue
             else:
                 file_name = file_name_m.group(0)
+                file_ext = file_name_m.group(1)
                 debug('Processing: file name: ' + file_name)
 
             file_path = TEMP_PATH + file_name
@@ -117,7 +118,7 @@ def FetchPixiv(mode):
             os.remove(file_path)
             
             # 写入list
-            exist_list[pixiv_id] = int(time.time())
+            exist_list[pixiv_id] = [int(time.time()), file_ext]
             # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
             debug('Processing: update exist file')
             exist_json = json.dumps(exist_list)
@@ -136,7 +137,7 @@ def FetchPixiv(mode):
         desc += u' - 阅览数：' + image['view']
         desc += u' - 总评分：' + image['score']
         desc += u'</p>'
-        desc += u'<p><img src="http://pixiv.qiniudn.com/%s"></p>' % file_name
+        desc += u'<p><img src="http://pixiv.qiniudn.com/%s"></p>' % (pixiv_id + '_m.' + exist_list[pixiv_id][1])
         # 量子统计的图片
         desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
         desc += u']]>' 
