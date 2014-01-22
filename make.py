@@ -34,6 +34,7 @@ def FetchPixiv(mode):
         return
 
     count = 0
+    posted_weibo_count = 0
     for image in data:
         count += 1
 
@@ -48,6 +49,14 @@ def FetchPixiv(mode):
         # 检查是否已存在
         # 不存在，需要下载：
         if pixiv_id not in exist_list:
+
+            # 每日排行要发微博，微博限制每小时15条，所以这边手动计数。如果一次执行中遇到超过15张新图
+            # 后面的新图就跳过，等到下次执行再抓
+            if mode == 'daily':
+                if posted_weibo_count > 15:
+                    continue
+                else:
+                    posted_weibo_count += 1
 
             # 直接下载medium页面的图
             html = Get('http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
@@ -130,30 +139,34 @@ def FetchPixiv(mode):
         else:
             debug('Duplicated: Image alreay exists')
         
-        # 生成RSS中的item
-        desc  = u'<![CDATA['
-        desc += u'<p>画师：' + image['author']
-        desc += u' - 上传于：' + image['date']
-        desc += u' - 阅览数：' + image['view']
-        desc += u' - 总评分：' + image['score']
-        desc += u'</p>'
-        desc += u'<p><img src="http://pixiv.qiniudn.com/%s"></p>' % (pixiv_id + '_m.' + exist_list[pixiv_id][1])
-        # 量子统计的图片
-        desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
-        desc += u']]>' 
+        # 每日排行抓新图超过15张时，剩下的新图会留到下次执行再抓，所以不为这些图生成rss条目
+        if mode == 'daily' and (pixiv_id not in exist_list) and posted_weibo_count > 15:
+            pass
+        else:
+            # 生成RSS中的item
+            desc  = u'<![CDATA['
+            desc += u'<p>画师：' + image['author']
+            desc += u' - 上传于：' + image['date']
+            desc += u' - 阅览数：' + image['view']
+            desc += u' - 总评分：' + image['score']
+            desc += u'</p>'
+            desc += u'<p><img src="http://pixiv.qiniudn.com/%s"></p>' % (pixiv_id + '_m.' + exist_list[pixiv_id][1])
+            # 量子统计的图片
+            desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
+            desc += u']]>' 
 
-        ITEMS.append(u'''<item>
-                    <title>%s</title>
-                    <link>%s</link>
-                    <description>%s</description>
-                    <pubDate>%s</pubDate>
-        　　       </item>''' % (
-            image['title'], 
-            'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id, 
-            desc,
-            image['date']
+            ITEMS.append(u'''<item>
+                        <title>%s</title>
+                        <link>%s</link>
+                        <description>%s</description>
+                        <pubDate>%s</pubDate>
+            　　       </item>''' % (
+                image['title'], 
+                'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id, 
+                desc,
+                image['date']
+                )
             )
-        )
 
         # 暂停一下试试
         debug('Waiting: ---\r\n')
