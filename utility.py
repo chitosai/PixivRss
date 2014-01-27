@@ -10,8 +10,11 @@ else: SLASH = '/'
 
 ABS_PATH = sys.path[0] + SLASH
 TEMP_PATH = ABS_PATH + 'temp' + SLASH 
+PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
+RSS_PATH     = ABS_PATH + 'rss' + SLASH
 LOG_PATH = ABS_PATH + 'log' + SLASH
-EXIST_FILE = ABS_PATH + 'exist.json'
+
+EXIST_FILE = ABS_PATH + 'exist.%s.json'
 
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
@@ -90,3 +93,18 @@ def log(pixiv_id, message):
         debug('DEBUG: ' + str(message))
         f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + pixiv_id + ', ' + str(message) + '\n' )
         f.close()
+
+# 读取exist.json
+def ReadExist(mode):
+    exist_file = open(EXIST_FILE % mode, 'r')
+    exist_list = json.load(exist_file)
+    exist_file.close()
+
+    return exist_list
+
+# 更新exist.json
+def UpdateExist(mode, exist_list):
+    exist_json = json.dumps(exist_list)
+    exist_file = open(EXIST_FILE % mode, 'w')
+    exist_file.write(exist_json)
+    exist_file.close()

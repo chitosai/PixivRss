@@ -4,4 +4,4 @@
 /config.py
 /test.py
 /ranking.html
-/exist.json
+/exist.*.json
