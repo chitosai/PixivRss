@@ -14,7 +14,7 @@ PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
 RSS_PATH     = ABS_PATH + 'rss' + SLASH
 LOG_PATH = ABS_PATH + 'log' + SLASH
 
-EXIST_FILE = ABS_PATH + 'exist.%s.json'
+EXIST_FILE = ABS_PATH + 'exist' + SLASH + 'exist.%s.json'
 
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
