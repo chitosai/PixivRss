@@ -40,7 +40,7 @@ def ParseRankingPage(html):
     return data
 
 # 抓pixiv页面
-def FetchPixiv(mode):
+def FetchPixiv(mode, title):
     debug('Processing: FetchPixiv')
     global DEBUG, PREVIEW_PATH, TEMP_PATH
 
@@ -143,8 +143,8 @@ def FetchPixiv(mode):
 
                 # 排行发微博
                 debug('Processing: posting weibo')
-                weibo_text = u'每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s' \
-                                % (count, image['author'], image['title'], 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id)
+                weibo_text = u'%s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s' \
+                                % (title, count, image['author'], image['title'], 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id)
                 sina_url = pchan.post(mode, weibo_text, file_path)
                 if sina_url == False:
                     continue
@@ -184,7 +184,7 @@ def GenerateRss(mode, title):
 
     # 读取exist.json
     exist_list = ReadExist(mode)
-    order = sorted(exist_list, key = lambda x: exist_list[x]['fetch_time'])
+    order = sorted(exist_list, key = lambda x: exist_list[x]['fetch_time'], reverse = True)
 
     for total in CONFIG['totals']:
         # 有时候因为pixiv那边的bug(?)会少几个条目，这时候只能以实际输出的数量为准了
@@ -260,7 +260,7 @@ if __name__ == '__main__':
             print 'Unknown Mode'
             exit(1)
 
-        FetchPixiv(mode)
+        FetchPixiv(mode, title)
         GenerateRss(mode, title)
 
     else:

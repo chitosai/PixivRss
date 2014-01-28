@@ -4,8 +4,8 @@ from weibo import *
 
 def post(mode, message, filepath):
     # init
-    c = APIClient(WEIBO_APP_KEY, WEIBO_APP_SECRET)
-    c.set_access_token(WEIBO_ACCESS_TOKEN[mode], 157679999)
+    c = APIClient(WEIBO[mode]['APP_KEY'], WEIBO[mode]['APP_SECRET'])
+    c.set_access_token(WEIBO[mode]['ACCESS_TOKEN'], 157679999)
     
     # upload
     try:

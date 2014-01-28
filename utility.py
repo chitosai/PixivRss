@@ -8,13 +8,13 @@ from config import *
 if platform.system() == 'Windows': SLASH = '\\'
 else: SLASH = '/'
 
-ABS_PATH = sys.path[0] + SLASH
-TEMP_PATH = ABS_PATH + 'temp' + SLASH 
+ABS_PATH     = sys.path[0] + SLASH
+TEMP_PATH    = ABS_PATH + 'temp' + SLASH 
 PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
 RSS_PATH     = ABS_PATH + 'rss' + SLASH
-LOG_PATH = ABS_PATH + 'log' + SLASH
+LOG_PATH     = ABS_PATH + 'log' + SLASH
 
-EXIST_FILE = ABS_PATH + 'exist' + SLASH + 'exist.%s.json'
+EXIST_FILE   = ABS_PATH + 'exist' + SLASH + 'exist.%s.json'
 
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
