@@ -4,11 +4,15 @@
 	<meta charset="UTF-8">
 	<title>Pixiv排行RSS</title>
 	<style>
-		h1:first-letter{
+		h1:first-letter,
+		h4:first-letter{
 			color: #FF5A5A;
 		}
 		h1{
 			color: #333;
+		}
+		h4{
+			margin: 20px 0 0;
 		}
 		p{
 			line-height: 1.625;
@@ -42,6 +46,33 @@
 </head>
 <body>
 	<h1>PixivRss</h1>
+
+	<h4>微博播报姬</h4>
+	<ul>
+		<li>每日
+			<a href="http://weibo.com/pixivchan" target="_blank">http://weibo.com/pixivchan</a>
+		</li>
+		<li>每周
+			<a href="http://weibo.com/pchanweekly" target="_blank">http://weibo.com/pchanweekly</a>
+		</li>
+		<li>每月
+			<a href="http://weibo.com/pchanmonthly" target="_blank">http://weibo.com/pchanmonthly</a>
+		</li>
+		<li>原创
+			<a href="http://weibo.com/pchanoriginal" target="_blank">http://weibo.com/pchanoriginal</a>
+		</li>
+		<li>新人
+			<a href="http://weibo.com/pchanrookie" target="_blank">http://weibo.com/pchanrookie</a>
+		</li>		
+		<li>男性向
+			<a href="http://weibo.com/pchanmale" target="_blank">http://weibo.com/pchanmale</a>
+		</li>
+		<li>女性向
+			<a href="http://weibo.com/pchanfemale" target="_blank">http://weibo.com/pchanfemale</a>
+		</li>
+	</ul>
+
+	<h4>RSS源</h4>
 	<ul>
 		<li>每日
 			<a href="http://rakuen.thec.me/PixivRss/daily-20" target="_blank">http://rakuen.thec.me/PixivRss/daily-20</a>
@@ -57,7 +88,7 @@
 		</li>
 		<li>新人
 			<a href="http://rakuen.thec.me/PixivRss/rookie-20" target="_blank">http://rakuen.thec.me/PixivRss/rookie-20</a>
-		</li>
+		</li>		
 		<li>男性向
 			<a href="http://rakuen.thec.me/PixivRss/male-20" target="_blank">http://rakuen.thec.me/PixivRss/male-20</a>
 		</li>
@@ -80,8 +111,10 @@
 			<a href="http://rakuen.thec.me/PixivRss/r18g-20" target="_blank">http://rakuen.thec.me/PixivRss/r18g-20</a>
 		</li>
 	</ul>
-	<p>网址中的-20表示订阅排名前20的图，有10、20、30、40、50五种数量可选，例如想订阅排名前10的图就把-20改为-10</p>
-	<p><b>同一排行连续上榜的图片不会重复出现</b>。假设图A连续五天出现在受男性欢迎排行上，不论其排名如何变化都只会在最初上榜时出现一次</p>
+
+	<p>* 网址中的-20表示订阅排名前20的图，有10、20、30、40、50五种数量可选，例如想订阅排名前10的图就把-20改为-10。</p>
+	<p>* 全年龄排行使用新浪微博图床，因此较r18排行而言图片尺寸更大并且打开速度更快。</p>
+	<p>* PixivRss不提供全尺寸无水印图，遇到喜欢的图一定要自己去P站点赞支持画师哦！</p>
 
 	<footer>
 		By <a href="http://weibo.com/chitosai" target="_blank">@千歳</a> with LOVE
