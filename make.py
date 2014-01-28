@@ -18,7 +18,7 @@ def ParseRankingPage(html):
 
     if not len(sections):
         print 'CAN\'T FIND SECTION'
-        return False
+        exit(1)
 
     data = []
 
@@ -250,7 +250,7 @@ if __name__ == '__main__':
         elif mode == 'female' : title = u'女性向作品'
 
         # r18
-        elif   mode == 'daily_r18' : title = u'每日R-18'
+        elif mode == 'daily_r18' : title = u'每日R-18'
         elif mode == 'weekly_r18' : title = u'每周R-18'
         elif mode == 'male_r18' : title = u'男性向R-18'
         elif mode == 'female_r18' : title = u'女性向R-18'
@@ -259,6 +259,9 @@ if __name__ == '__main__':
         else:
             print 'Unknown Mode'
             exit(1)
+
+        if 'r18' in mode:
+            LoginToPixiv()
 
         FetchPixiv(mode, title)
         GenerateRss(mode, title)
