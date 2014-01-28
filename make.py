@@ -147,6 +147,7 @@ def FetchPixiv(mode, title):
                                 % (title, count, image['author'], image['title'], 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id)
                 sina_url = pchan.post(mode, weibo_text, file_path)
                 if sina_url == False:
+                    debug('Error: failed to post weibo')
                     continue
 
                 # 获取上传的图片地址
@@ -161,7 +162,7 @@ def FetchPixiv(mode, title):
             if 'r18' not in mode:
                 item_info['image'] = sina_url
             else:
-                item_info['image'] = 'http://rakuen.thec.me/PixivRss/' + pixiv_id + '.jpg'
+                item_info['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
 
             item_info.update(image)
             exist_list[pixiv_id] = item_info
