@@ -77,14 +77,12 @@ def FetchPixiv(mode, title):
         # 不存在，需要下载：
         if pixiv_id not in exist_list:
 
-            # 下载小尺寸预览图...
-            debug('Processing: downloading thumbnail: ' + image['preview'])
-            download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
-
             # 全年龄向的图抓大图并传到微博
             if 'r18' not in mode:
 
-                if posted_weibo_count > 15:
+                debug('Processing: NOT R18, will fetch medium size image')
+
+                if posted_weibo_count > 5:
                     return
                 else:
                     posted_weibo_count += 1
@@ -156,6 +154,12 @@ def FetchPixiv(mode, title):
                 # 删除大图
                 debug('Processing: delete middle size image')
                 os.remove(file_path)
+
+            # r18图下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
+            else:
+                # 下载小尺寸预览图...
+                debug('Processing: R18, downloading thumbnail: ' + image['preview'])
+                download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
             
             # 写入list
             item_info = {'fetch_time' : int(time.time())}
