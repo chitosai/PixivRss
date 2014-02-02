@@ -141,7 +141,7 @@ def FetchPixiv(mode, title):
 
                 # 排行发微博
                 debug('Processing: posting weibo')
-                weibo_text = u'%s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s' \
+                weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s' \
                                 % (title, count, image['author'], image['title'], 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id)
                 sina_url = pchan.post(mode, weibo_text, file_path)
                 if sina_url == False:
