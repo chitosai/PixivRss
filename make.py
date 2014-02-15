@@ -144,10 +144,17 @@ def FetchPixiv(mode, title):
                 debug('Processing: downloading middle size image')
                 download(file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id)
 
+                debug('Processing: get WEIBO_NICKNAME')
+                # @画师
+                weibo_nickname = pchan.get_weibo_nickname(image['uid'])
+
                 # 排行发微博
                 debug('Processing: posting weibo')
-                weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s' \
-                                % (title, count, image['author'], image['title'], 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id)
+                weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
+                                % (title, count, image['author'], image['title'], \
+                                 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id,
+                                 weibo_nickname)
+
                 sina_url = pchan.post(mode, weibo_text, file_path)
                 if sina_url == False:
                     debug('Error: failed to post weibo')

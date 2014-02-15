@@ -15,6 +15,7 @@ RSS_PATH     = ABS_PATH + 'rss' + SLASH
 LOG_PATH     = ABS_PATH + 'log' + SLASH
 
 EXIST_FILE   = ABS_PATH + 'exist' + SLASH + '%s.json'
+PIXIV_WEIBO_MAP = ABS_PATH + 'pixiv.weibo.map.json'
 
 MODE = {
     'daily'     : u'每日',
@@ -116,7 +117,6 @@ def ReadExist(mode):
     exist_file = open(EXIST_FILE % mode, 'r')
     exist_list = json.load(exist_file)
     exist_file.close()
-
     return exist_list
 
 # 更新exist.json
@@ -125,3 +125,17 @@ def UpdateExist(mode, exist_list):
     exist_file = open(EXIST_FILE % mode, 'w')
     exist_file.write(exist_json)
     exist_file.close()
+
+# 读取pixiv.weibo.map
+def LoadMap():
+    f = open(PIXIV_WEIBO_MAP, 'r')
+    data = json.load(f)
+    f.close()
+    return data
+
+# 更新pixiv.weibo.map
+def UpdateMap(data):
+    raw_json = json.dumps(data)
+    f = open(PIXIV_WEIBO_MAP, 'w')
+    f.write(raw_json)
+    f.close()
