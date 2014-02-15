@@ -181,6 +181,7 @@ def FetchPixiv(mode, title):
                 item_info['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
 
             item_info.update(image)
+            item_info.pop('preview')
             exist_list[pixiv_id] = item_info
             # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
             debug('Processing: update exist file')
