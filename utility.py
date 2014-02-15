@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, platform, os, sys, time, datetime, json
+import urllib2, re, platform, os, sys, time, datetime, json, MySQLdb
 from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
 from config import *
@@ -109,7 +109,7 @@ def log(pixiv_id, message):
         f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'w+')
     finally:
         debug('DEBUG: ' + str(message))
-        f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + pixiv_id + ', ' + str(message) + '\n' )
+        f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + str(pixiv_id) + ', ' + str(message) + '\n' )
         f.close()
 
 # 读取exist.json
@@ -126,16 +126,40 @@ def UpdateExist(mode, exist_list):
     exist_file.write(exist_json)
     exist_file.close()
 
-# 读取pixiv.weibo.map
-def LoadMap():
-    f = open(PIXIV_WEIBO_MAP, 'r')
-    data = json.load(f)
-    f.close()
-    return data
+# 数据库操作
+class DB:
+    # 构造函数时连接数据库
+    def __init__(self):
+        try:
+            self._ = MySQLdb.connect( CONFIG['DB_HOST'], CONFIG['DB_USER'], CONFIG['DB_PASS'], CONFIG['DB_NAME'], charset="utf8" )
+            self.c  = self._.cursor( MySQLdb.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
+        except Exception, e:
+            log(0, '数据库连接出错 : ' + str(e))
+            exit(1)
 
-# 更新pixiv.weibo.map
-def UpdateMap(data):
-    raw_json = json.dumps(data)
-    f = open(PIXIV_WEIBO_MAP, 'w')
-    f.write(raw_json)
-    f.close()
+    # 析构时关闭数据库
+    def __del__(self):
+        self.c.close()
+        self._.close()
+
+    # 查询
+    def Query( self, sql, data = None):
+        try:
+            if data : 
+                self.c.execute( sql, data )
+            else : 
+                self.c.execute( sql )
+
+            return self.c.fetchall()
+        except Exception, e:
+            log(0,  str(e[0]) + ' : ' + e[1])
+            return False
+
+    # 执行
+    def Run( self, sql, data ):
+        try:
+            self.c.execute( sql, data )
+            return self._.insert_id()
+        except Exception, e:
+            log(0,  str(e[0]) + ' : ' + e[1])
+            return False
