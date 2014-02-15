@@ -244,23 +244,11 @@ def GenerateRss(mode, title):
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         mode = sys.argv[1]
+        global MODE
 
         # 验证分类
-        if mode == 'daily' : title = u'每日'
-        elif mode == 'weekly' : title = u'每周'
-        elif mode == 'monthly' : title = u'每月'
-        elif mode == 'rookie' : title = u'新人'
-        elif mode == 'original' : title = u'原创'
-        elif mode == 'male' : title = u'男性向作品'
-        elif mode == 'female' : title = u'女性向作品'
-
-        # r18
-        elif mode == 'daily_r18' : title = u'每日R-18'
-        elif mode == 'weekly_r18' : title = u'每周R-18'
-        elif mode == 'male_r18' : title = u'男性向R-18'
-        elif mode == 'female_r18' : title = u'女性向R-18'
-        elif mode == 'r18g' : title = u'每日R-18G'
-
+        if mode in MODE:
+            title = MODE[mode]
         else:
             print 'Unknown Mode'
             exit(1)

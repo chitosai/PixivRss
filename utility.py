@@ -16,6 +16,23 @@ LOG_PATH     = ABS_PATH + 'log' + SLASH
 
 EXIST_FILE   = ABS_PATH + 'exist' + SLASH + '%s.json'
 
+MODE = {
+    'daily'     : u'每日',
+    'weekly'    : u'每周',
+    'monthly'   : u'每月',
+    'rookie'    : u'新人',
+    'original'  : u'原创',
+    'male'      : u'男性向作品',
+    'female'    : u'女性向作品',
+    
+    # r18
+    'daily_r18' : u'每日R-18',
+    'weekly_r18': u'每周R-18',
+    'male_r18'  : u'男性向R-18',
+    'female_r18': u'女性向R-18',
+    'r18g'      : u'每日R-18G',
+}
+
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
     date = datetime.datetime.strptime(time_original, format_original)
