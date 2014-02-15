@@ -32,8 +32,13 @@ def ParseRankingPage(html):
         item['score'] = J(section).attr('data-total-score')
         item['preview'] = J(section).find('img._thumbnail').attr('data-src')
 
+        # pixiv id
         m = re.search('&illust_id=(\d+)&', J(section).children('a.work').attr['href'])
         item['id'] = m.group(1)
+
+        # user id
+        m = re.search('member\.php\?id=(\d+)&', J(section).children('a.user-container').attr['href'])
+        item['uid'] = m.group(1)
 
         data.append(item)
 
