@@ -37,8 +37,9 @@ def get_weibo_nickname(pixiv_uid):
         pixiv_user_page = Get('http://www.pixiv.net/member.php?id=' + pixiv_uid)
         # 先剔除掉pixiv自己的weibo链接
         pixiv_user_page = pixiv_user_page.replace('http://weibo.com/2230227495', '')
+        download('a.html', 'http://www.pixiv.net/member.php?id=' + pixiv_uid)
         # 直接从整个网页代码里匹配
-        m = re.search('http://(?:www\.)weibo\.com/(.+?)<', pixiv_user_page, re.S)
+        m = re.search('http://(?:www\.)?weibo\.com/(.+?)<', pixiv_user_page, re.S)
         if m:
             weibo_uid = m.group(1)
             # 保存
