@@ -2,8 +2,8 @@
 
 from utility import *
 
-# 清理超过7天的图片
-threshold = long(time.time() - 3600 * 24 * 7)
+# 清理超过15天的图片
+threshold = long(time.time() - 3600 * 24 * 15)
 
 for mode in MODE:
     # load json
