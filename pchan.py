@@ -37,7 +37,7 @@ def get_weibo_nickname(pixiv_uid):
         pixiv_user_page = Get('http://www.pixiv.net/member.php?id=' + pixiv_uid)
         # 先剔除掉pixiv自己的weibo链接
         pixiv_user_page = pixiv_user_page.replace('http://weibo.com/2230227495', '')
-        download('a.html', 'http://www.pixiv.net/member.php?id=' + pixiv_uid)
+        # download('a.html', 'http://www.pixiv.net/member.php?id=' + pixiv_uid)
         # 直接从整个网页代码里匹配
         m = re.search('http://(?:www\.)?weibo\.com/(.+?)<', pixiv_user_page, re.S)
         if m:
@@ -57,8 +57,13 @@ def get_weibo_nickname(pixiv_uid):
     if m:
         return u' @%s' % m.group(1).decode('utf-8')
     else:
-        log('pixiv_uid:' + pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
-        return ''
+        # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
+        m = re.search('<title>(.+?)的微博|新浪微博', weibo_user_page)
+        if m:
+            return u' @%s' % m.group(1).decode('utf-8')
+        else:
+            log('pixiv_uid:' + pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
+            return ''
 
 
 # 根据pixiv_user_id从数据库查找微博昵称

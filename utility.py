@@ -15,7 +15,6 @@ RSS_PATH     = ABS_PATH + 'rss' + SLASH
 LOG_PATH     = ABS_PATH + 'log' + SLASH
 
 EXIST_FILE   = ABS_PATH + 'exist' + SLASH + '%s.json'
-PIXIV_WEIBO_MAP = ABS_PATH + 'pixiv.weibo.map.json'
 
 MODE = {
     'daily'     : u'每日',
@@ -75,7 +74,8 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
         res = opener.open(url)
         return res.read()
 
-    except:
+    except Exception, e:
+        log(e, 'Error: unable to get ' + url)
         print 'Error: unable to get ' + url
         return
 
