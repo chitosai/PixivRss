@@ -64,6 +64,10 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
             ('Referer', refer)
         ]
 
+        # 防止海外访问weibo变英文版
+        if 'weibo.com' in url:
+            opener.addheaders = [('Cookie', 'lang=zh-cn')]
+
         if data != '':
             request = urllib2.Request( url = url, data = data )
             res = opener.open( request )
