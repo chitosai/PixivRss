@@ -55,6 +55,10 @@ def FetchPixiv(mode, title):
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
+    # 检查
+    if not html:
+        return
+
     # 解析排行
     data = ParseRankingPage(html.decode('utf-8'))
     
@@ -95,6 +99,10 @@ def FetchPixiv(mode, title):
                 # 下载medium页面的中尺寸图
                 debug('Processing: prepare to get medium size image')
                 html = Get('http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
+
+                # 三次抓取失败就先跳过
+                if not html:
+                    continue
 
                 # 解析图片地址
                 doc = J(html)
@@ -141,8 +149,13 @@ def FetchPixiv(mode, title):
                 file_path = TEMP_PATH + file_name
 
                 # 保存大图
-                debug('Processing: downloading middle size image')
-                download(file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id)
+                debug('Processing: downloading medium size image')
+                r = download(file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id)
+
+                # 三次抓取失败就先跳过
+                if not r:
+                    log(pixiv_id, 'Error whiling download medium size image')
+                    continue
 
                 debug('Processing: get WEIBO_NICKNAME')
                 # @画师
@@ -171,7 +184,11 @@ def FetchPixiv(mode, title):
             else:
                 # 下载小尺寸预览图...
                 debug('Processing: R18, downloading thumbnail: ' + image['preview'])
-                download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
+                r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
+                
+                # 三次抓取失败就先跳过
+                if not r:
+                    continue
             
             # 写入list
             item_info = {'fetch_time' : int(time.time())}

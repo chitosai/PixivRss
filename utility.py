@@ -44,7 +44,7 @@ def GetCurrentTime():
 def escape( text ):
     return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
-def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
+def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
     global ABS_PATH
     try:
         cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
@@ -79,9 +79,13 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/' ):
         return res.read()
 
     except Exception, e:
-        log(e, 'Error: unable to get ' + url)
-        print 'Error: unable to get ' + url
-        return
+        # 自动重试，每张图最多3次
+        if retry > 0:
+            return Get( url, data, refer, retry-1 )
+        else:
+            log(e, 'Error: unable to get ' + url)
+            print 'Error: unable to get ' + url
+            return False
 
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
@@ -92,13 +96,19 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     # 下载
     data = Get(url, refer = refer)
 
+    # 检查
+    if not data:
+        return False
+
     # 写入
     try:
         f = open(fname, 'w+')
         f.write(data)
         f.close()
+        return True
     except Exception, err:
         log(url, err)
+        return False
 
 # DEBUG
 def debug(message):
