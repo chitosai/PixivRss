@@ -75,6 +75,11 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         else:
             res = opener.open( url )
 
+        debug('Network: url - ' + url)
+        if data != '':
+            debug('Network: post')
+            debug(data)
+
         res = opener.open(url)
         debug('Network: Status Code - ' + str(res.getcode()))
         return res.read()
