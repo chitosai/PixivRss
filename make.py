@@ -64,7 +64,7 @@ def FetchPixiv(mode, title):
     
     # 检查一下匹配结果
     if not len(data):
-        print 'failed to get ranking list info'
+        log(0, 'failed to get ranking list info')
         return
 
     # 开始遍历
@@ -82,135 +82,111 @@ def FetchPixiv(mode, title):
         debug('Starting: ' + str(count))
         debug('processing: pixiv_id: ' + str(pixiv_id))
 
-        # 检查是否已存在
-        # 不存在，需要下载：
-        if pixiv_id not in exist_list:
-
-            # 全年龄向的图抓大图并传到微博
-            if 'r18' not in mode:
-
-                debug('Processing: NOT R18, will fetch medium size image')
-
-                if posted_weibo_count > 5:
-                    return
-                else:
-                    posted_weibo_count += 1
-
-                # 下载medium页面的中尺寸图
-                debug('Processing: prepare to get medium size image')
-                html = Get('http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
-
-                # 三次抓取失败就先跳过
-                if not html:
-                    continue
-
-                # 解析图片地址
-                doc = J(html)
-                img = doc('.works_display img')
-
-                if not len(img):
-                    log(pixiv_id, 'ERROR: CAN\'T FIND IMAGE in medium page')
-                    continue
-
-                img_url = J(img).attr('src')
-                debug('Processing: medium size image url: ' + img_url)
-
-                # # 访问medium页面，查找大图页面地址
-                # medium_page = Get('http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
-                # large_page = re.search('member_illust\.php\?mode=(manga|big)&amp;illust_id=\d+', medium_page)
-                # if not large_page:
-                #     log(pixiv_id, 'Can\'t find big_page url')
-                #     continue
-                # else:
-                #     large_type = large_page.group(1)
-
-                # # 下载大图
-                # img_page = Get('http://www.pixiv.net/member_illust.php?mode=%s&illust_id=%s' % (large_type, pixiv_id),
-                #                          refer = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id)
-                # img_m = re.search('<img src="([^"]+)" onclick="\(window.open\(\'\', \'_self\'\)\)\.close\(\)">', img_page)
-
-                # # 解析大图地址
-                # if not img_m:
-                #     log(pixiv_id, 'Can\'t find fullsize image url')
-                #     continue
-                # else:
-                #     img_url = img_m.group(1)
-                
-                # 解析图片文件名
-                file_name_m = re.search('\d+_m\.(gif|jpg|jpeg|png)', img_url)
-                if not file_name_m:
-                    log(pixiv_id, 'Can\'t parse file name')
-                    continue
-                else:
-                    file_name = file_name_m.group(0)
-                    file_ext = file_name_m.group(1)
-                    debug('Processing: medium size image file name: ' + file_name)
-
-                file_path = TEMP_PATH + file_name
-
-                # 保存大图
-                debug('Processing: downloading medium size image')
-                r = download(file_path, img_url, refer = 'http://www.pixiv.net/member_illust.php?mode=big&illust_id=' + pixiv_id)
-
-                # 三次抓取失败就先跳过
-                if not r:
-                    log(pixiv_id, 'Error whiling download medium size image')
-                    continue
-
-                debug('Processing: get WEIBO_NICKNAME')
-                # @画师
-                weibo_nickname = pchan.get_weibo_nickname(image['uid'])
-
-                # 排行发微博
-                debug('Processing: posting weibo')
-                weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
-                                % (title, count, image['author'], image['title'], \
-                                 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id,
-                                 weibo_nickname)
-
-                sina_url = pchan.post(mode, weibo_text, file_path)
-                if sina_url == False:
-                    debug('Error: failed to post weibo')
-                    continue
-
-                # 获取上传的图片地址
-                debug('Processing: post success, image url:' + sina_url)
-
-                # 删除大图
-                debug('Processing: delete middle size image')
-                os.remove(file_path)
-
-            # r18图下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
-            else:
-                # 下载小尺寸预览图...
-                debug('Processing: R18, downloading thumbnail: ' + image['preview'])
-                r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
-                
-                # 三次抓取失败就先跳过
-                if not r:
-                    continue
-            
-            # 写入list
-            item_info = {'fetch_time' : int(time.time())}
-            if 'r18' not in mode:
-                item_info['image'] = sina_url
-            else:
-                item_info['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
-
-            item_info.update(image)
-            item_info.pop('preview')
-            exist_list[pixiv_id] = item_info
-            # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
-            debug('Processing: update exist file')
-            UpdateExist(mode, exist_list)
-        
-        # 已存在
-        else:
+        # 检查是否已下载
+        if pixiv_id in exist_list:
             debug('Duplicated: Image alreay exists')
+            continue
+
+        # 全年龄向的图抓大图并传到微博
+        if 'r18' not in mode:
+            debug('Processing: NOT R18, will fetch medium size image')
+
+            # 限制每小时最多发N条微博
+            if posted_weibo_count > 5:
+                return
+            else:
+                posted_weibo_count += 1
+
+            # 抓medium尺寸图，成功返回file_path（本地文件名）
+            file_path = FetchMediumSizeImage(pixiv_id)
+            if not file_path:
+                continue
+
+            # 发到图床，这里如果返回false应该是上传失败了
+            # @失败不会返回false，但是会记录log
+            r = pchan.upload(pixiv_id, image, mode, title, count)
+            if not r:
+                continue
+
+            # 删除大图
+            debug('Processing: delete middle size image')
+            os.remove(file_path)
+
+        # r18图下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
+        else:
+            debug('Processing: R18, downloading thumbnail: ' + image['preview'])
+
+            # 下载小尺寸预览图...
+            r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
+            
+            # 三次抓取失败就先跳过
+            if not r:
+                log(pixiv_id, 'failed to get thumbnail')
+                continue
+        
+        # 写入list
+        item_info = {'fetch_time' : int(time.time())}
+        if 'r18' not in mode:
+            item_info['image'] = sina_url
+        else:
+            item_info['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
+
+        item_info.update(image)
+        item_info.pop('preview')
+        exist_list[pixiv_id] = item_info
+        # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
+        debug('Processing: update exist file')
+        UpdateExist(mode, exist_list)
 
         # 暂停一下试试
         debug('Waiting: ---\r\n')
         time.sleep(1)
+
+# 抓中尺寸图
+def FetchMediumSizeImage(pixiv_id):
+    debug('Processing: start to get medium size image')
+    illust_url = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + str(pixiv_id)
+    html = Get(illust_url)
+
+    # 三次抓取失败
+    if not html:
+        log(pixiv_id, 'Failed to get ' + illust_url)
+        return False
+
+    # 解析图片地址
+    doc = J(html)
+    img = doc('.works_display img')
+
+    if not len(img):
+        log(pixiv_id, 'CAN\'T FIND IMAGE in medium page')
+        return False
+
+    img_url = J(img).attr('src')
+    debug('Processing: medium size image url: ' + img_url)
+    
+    # 解析图片文件名
+    file_name_m = re.search('\d+_m\.(gif|jpg|jpeg|png)', img_url)
+    if not file_name_m:
+        log(pixiv_id, 'Can\'t parse file name')
+        return False
+    else:
+        file_name = file_name_m.group(0)
+        file_ext = file_name_m.group(1)
+        debug('Processing: medium size image file name: ' + file_name)
+
+    file_path = TEMP_PATH + file_name
+
+    # 保存大图
+    debug('Processing: downloading medium size image')
+    r = download(file_path, img_url, refer = illust_url)
+
+    # 三次抓取失败就先跳过
+    if not r:
+        log(pixiv_id, 'Failed to download medium size image')
+        return False
+
+    # 成功
+    return file_path
 
 # 输出rss文件
 def GenerateRss(mode, title):

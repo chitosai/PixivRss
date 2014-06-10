@@ -2,6 +2,30 @@
 from utility import *
 from weibo import *
 
+# 上传到新浪图床
+def upload(pixiv_id, image, mode, title, count):
+    debug('Processing: get WEIBO_NICKNAME')
+    # 获取微博昵称
+    weibo_nickname = pchan.get_weibo_nickname(image['uid'])
+
+    # 排行发微博
+    debug('Processing: posting weibo')
+    weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
+                    % (title, count, image['author'], image['title'], \
+                     'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id,
+                     weibo_nickname)
+
+    sina_url = pchan.post(mode, weibo_text, file_path)
+
+    # 渣浪图片地址
+    if sina_url == False:
+        log(pixiv_id, 'failed to get image url from sina')
+        return False
+
+    debug('Processing: post success, image url:' + sina_url)
+
+    return True
+
 # 发微博
 def post(mode, message, filepath):
     # init
@@ -64,7 +88,6 @@ def get_weibo_nickname(pixiv_uid):
         else:
             log('pixiv_uid:' + pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
             return ''
-
 
 # 根据pixiv_user_id从数据库查找微博昵称
 def get_weibo_uid_by_(pixiv_uid):
