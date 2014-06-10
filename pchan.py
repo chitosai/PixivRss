@@ -6,7 +6,7 @@ from weibo import *
 def upload(pixiv_id, image, mode, title, count):
     debug('Processing: get WEIBO_NICKNAME')
     # 获取微博昵称
-    weibo_nickname = pchan.get_weibo_nickname(image['uid'])
+    weibo_nickname = get_weibo_nickname(image['uid'])
 
     # 排行发微博
     debug('Processing: posting weibo')
@@ -15,7 +15,7 @@ def upload(pixiv_id, image, mode, title, count):
                      'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id,
                      weibo_nickname)
 
-    sina_url = pchan.post(mode, weibo_text, file_path)
+    sina_url = post(mode, weibo_text, file_path)
 
     # 渣浪图片地址
     if sina_url == False:

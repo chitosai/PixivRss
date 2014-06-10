@@ -76,6 +76,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             res = opener.open( url )
 
         res = opener.open(url)
+        debug('Network: Status Code - ' + str(res.getcode()))
         return res.read()
 
     except Exception, e:
@@ -91,7 +92,13 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     # 检查文件是否存在
     if os.path.exists(fname):
-        return
+        # 检查是否为空
+        if os.path.getsize(fname) != 0:
+            # 不为空说明已存在，返回True
+            return True
+        else:
+            # 为空说明文件有问题，需要重新下载
+            os.remove(fname)
 
     # 下载
     data = Get(url, refer = refer)
