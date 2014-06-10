@@ -104,8 +104,8 @@ def FetchPixiv(mode, title):
 
             # 发到图床，这里如果返回false应该是上传失败了
             # @失败不会返回false，但是会记录log
-            r = pchan.upload(pixiv_id, image, file_path, mode, title, count)
-            if not r:
+            sina_url = pchan.upload(pixiv_id, image, file_path, mode, title, count)
+            if not sina_url:
                 continue
 
             # 删除大图

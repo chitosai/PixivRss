@@ -24,7 +24,7 @@ def upload(pixiv_id, image, file_path, mode, title, count):
 
     debug('Processing: post success, image url:' + sina_url)
 
-    return True
+    return sina_url
 
 # 发微博
 def post(mode, message, filepath):
