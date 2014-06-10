@@ -3,7 +3,7 @@ from utility import *
 from weibo import *
 
 # 上传到新浪图床
-def upload(pixiv_id, image, mode, title, count):
+def upload(pixiv_id, image, file_path, mode, title, count):
     debug('Processing: get WEIBO_NICKNAME')
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
@@ -82,7 +82,7 @@ def get_weibo_nickname(pixiv_uid):
         return u' @%s' % m.group(1).decode('utf-8')
     else:
         # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
-        m = re.search('<title>(.+?)的微博|新浪微博', weibo_user_page)
+        m = re.search('<title>(.+?)的微博_微博', weibo_user_page)
         if m:
             return u' @%s' % m.group(1).decode('utf-8')
         else:
