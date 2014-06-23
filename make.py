@@ -217,8 +217,7 @@ def GenerateRss(mode, title):
         for i in range(real_total):
             image = exist_list[order[i]]
             # 生成RSS中的item
-            desc  = u'<![CDATA['
-            desc += u'<p>画师：' + image['author']
+            desc  = u'<p>画师：' + image['author']
             desc += u' - 上传于：' + image['date']
             desc += u' - 阅览数：' + image['view']
             desc += u' - 总评分：' + image['score']
@@ -226,12 +225,11 @@ def GenerateRss(mode, title):
             desc += u'<p><img src="%s"></p>' % image['image']
             # 量子统计的图片
             desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
-            desc += u']]>' 
 
             RSS += u'''<item>
-                        <title>%s</title>
+                        <title><![CDATA[%s]]></title>
                         <link>%s</link>
-                        <description>%s</description>
+                        <description><![CDATA[%s]]></description>
                         <pubDate>%s</pubDate>
             　　       </item>''' % (
                     image['title'], 
