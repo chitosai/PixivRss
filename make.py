@@ -246,6 +246,10 @@ def GenerateRss(mode, title):
             desc += u' - 阅览数：' + image['view']
             desc += u' - 总评分：' + image['score']
             desc += u'</p>'
+
+            # 插入动图提示
+            if image.get('isAnimated', False): desc += u'<p>** 原图为动图 **</p>'
+
             desc += u'<p><img src="%s"></p>' % image['image']
             # 量子统计的图片
             desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
