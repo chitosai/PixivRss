@@ -32,8 +32,16 @@ def ParseRankingPage(html):
         item['score'] = J(section).attr('data-total-score')
         item['preview'] = J(section).find('img._thumbnail').attr('data-src')
 
+        work_dom = J(section).children('a.work')
+
+        # 检查是否为动态图
+        if 'ugoira-thumbnail' in work_dom.attr('class'):
+            item['isAnimated'] = True
+        else:
+            item['isAnimated'] = False
+
         # pixiv id
-        m = re.search('&illust_id=(\d+)&', J(section).children('a.work').attr['href'])
+        m = re.search('&illust_id=(\d+)&', work_dom.attr['href'])
         item['id'] = m.group(1)
 
         # user id
@@ -97,10 +105,26 @@ def FetchPixiv(mode, title):
             else:
                 posted_weibo_count += 1
 
-            # 抓medium尺寸图，成功返回file_path（本地文件名）
-            file_path = FetchMediumSizeImage(pixiv_id)
-            if not file_path:
-                continue
+            # 先判断是否为动图，如果是动图只能抓preview
+            if image['isAnimated']:
+                debug('Processing: is-animated, downloading thumbnail: ' + image['preview'])
+
+                # 下载小尺寸预览图...
+                r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
+                
+                # 三次抓取失败就先跳过
+                if not r:
+                    log(pixiv_id, 'failed to get thumbnail')
+                    continue
+                else:
+                    file_path = PREVIEW_PATH + pixiv_id + '.jpg'
+
+            # 非动态图，可以抓中尺寸图
+            else:
+                # 抓medium尺寸图，成功返回file_path（本地文件名）
+                file_path = FetchMediumSizeImage(pixiv_id)
+                if not file_path:
+                    continue
 
             # 发到图床，这里如果返回false应该是上传失败了
             # @失败不会返回false，但是会记录log
@@ -109,7 +133,7 @@ def FetchPixiv(mode, title):
                 continue
 
             # 删除大图
-            debug('Processing: delete middle size image')
+            debug('Processing: upload completed, deleting temp image')
             os.remove(file_path)
 
         # r18图下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
@@ -117,7 +141,7 @@ def FetchPixiv(mode, title):
             debug('Processing: R18, downloading thumbnail: ' + image['preview'])
 
             # 下载小尺寸预览图...
-            r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
+            r = download(TEMP_PATH + pixiv_id + '.jpg', image['preview'])
             
             # 三次抓取失败就先跳过
             if not r:
