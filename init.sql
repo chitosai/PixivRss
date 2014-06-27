@@ -21,7 +21,7 @@ CREATE TABLE `award_log` (
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上榜时间',
   `type` tinyint(4) NOT NULL,
   `uid` int(11) NOT NULL COMMENT '上榜用户pixiv_id'
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
