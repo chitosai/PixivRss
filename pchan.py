@@ -8,6 +8,10 @@ def upload(pixiv_id, image, file_path, mode, title, count):
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
 
+    # 记录用户上榜
+    if weibo_nickname != '':
+        award_log(mode, image['uid'])
+
     # 排行发微博
     debug('Processing: posting weibo')
     weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
@@ -104,3 +108,12 @@ def insert_id_map(pixiv_uid, weibo_uid):
     db = DB()
     sql = 'INSERT INTO `pixiv_weibo_id_map` ( `pixiv_uid`, `weibo_uid` ) VALUES ( %s, %s )'
     return db.Run(sql, (pixiv_uid, weibo_uid))
+
+# 记录用户上榜
+def award_log(mode, pixiv_uid):
+    global MODE_ID
+    type = MODE_ID[mode]
+
+    db = DB()
+    sql = 'INSERT INTO `award_log` ( `type`, `uid` ) VALUES ( %s, %s )'
+    return db.Run(sql, (type, pixiv_uid))

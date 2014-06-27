@@ -33,6 +33,17 @@ MODE = {
     'r18g'      : u'每日R-18G',
 }
 
+# 这个id是保存上榜log时用的
+MODE_ID = {
+    'daily'     : 1,
+    'weekly'    : 2,
+    'monthly'   : 3,
+    'rookie'    : 4,
+    'original'  : 5,
+    'male'      : 6,
+    'female'    : 7,
+}
+
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
     date = datetime.datetime.strptime(time_original, format_original)
