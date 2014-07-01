@@ -82,8 +82,8 @@ def FetchPixiv(mode, title):
     for image in data:
         count += 1
 
-        # DEBUG模式下只处理3个条目就退出
-        if DEBUG and count > 3 : return
+        # DEBUG模式下最多运行次数
+        if DEBUG and count > DEBUG_FETCH_MAX : return
 
         pixiv_id = image['id']
 
