@@ -39,24 +39,25 @@ def post(mode, message, filepath):
     # init
     c = APIClient(WEIBO[mode]['APP_KEY'], WEIBO[mode]['APP_SECRET'])
     c.set_access_token(WEIBO[mode]['ACCESS_TOKEN'], 157679999)
+
+    # 准备返回值，默认为False，上传完毕修改为图片url
+    r = False
     
     # upload
     try:
         f = open(filepath, 'rb')
 
-        r = c.statuses.upload.post(status = message, pic = f)
-        if 'error' in r:
-            log(filepath, r)
-            return False
+        upload_r = c.statuses.upload.post(status = message, pic = f)
+        if 'error' in upload_r:
+            log(filepath, upload_r)
         else:
-            return r['original_pic']
+            r = upload_r['original_pic']
 
     except Exception, err:
         log(filepath, err)
-        return False
-        
     finally:
         f.close()
+        return r
 
 # 根据pixiv_user_id查找微博昵称
 def get_weibo_nickname(pixiv_uid):
