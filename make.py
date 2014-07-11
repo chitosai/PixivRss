@@ -35,7 +35,7 @@ def ParseRankingPage(html):
         work_dom = J(section).children('a.work')
 
         # 检查是否为动态图
-        if 'ugoira-thumbnail' in work_dom.attr('class'):
+        if 'ugoku-illust' in work_dom.children('._layout-thumbnail').attr('class'):
             item['isAnimated'] = True
         else:
             item['isAnimated'] = False
