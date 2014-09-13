@@ -81,10 +81,10 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
 
         if data != '':
             request = urllib2.Request( url = url, data = data )
-            res = opener.open( request )
+            res = opener.open( request, timeout = 30 )
             cj.save() # 只有在post时才保存新获得的cookie
         else:
-            res = opener.open( url )
+            res = opener.open( url, timeout = 30 )
 
         debug('Network: url - ' + url)
         if data != '':
