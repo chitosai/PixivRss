@@ -91,11 +91,11 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         debug('Network: post')
         debug(data)
         request = urllib2.Request( url = url, data = data )
-        res = opener.open( request, timeout = 30 )
+        res = opener.open( request, timeout = 15 )
         cj.save() # 只有在post时才保存新获得的cookie
     else:
         debug('Network: get')
-        res = opener.open( url, timeout = 30 )
+        res = opener.open( url, timeout = 15 )
 
     debug('Network: Status Code - ' + str(res.getcode()))
 
