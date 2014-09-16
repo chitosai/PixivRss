@@ -79,19 +79,17 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         if 'weibo.com' in url:
             opener.addheaders = [('Cookie', 'lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164')]
 
+        debug('Network: url - ' + url)
+        
         if data != '':
+            debug('Network: post')
+            debug(data)
             request = urllib2.Request( url = url, data = data )
             res = opener.open( request, timeout = 30 )
             cj.save() # 只有在post时才保存新获得的cookie
         else:
             res = opener.open( url, timeout = 30 )
 
-        debug('Network: url - ' + url)
-        if data != '':
-            debug('Network: post')
-            debug(data)
-
-        res = opener.open(url)
         debug('Network: Status Code - ' + str(res.getcode()))
         return res.read()
 
