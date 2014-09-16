@@ -86,28 +86,28 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
 
     debug('Network: url - ' + url)
 
-    # 发出请求
-    if data != '':
-        debug('Network: post')
-        debug(data)
-        request = urllib2.Request( url = url, data = data )
-        res = opener.open( request, timeout = 15 )
-        cj.save() # 只有在post时才保存新获得的cookie
-    else:
-        debug('Network: get')
-        res = opener.open( url, timeout = 15 )
-
-    debug('Network: Status Code - ' + str(res.getcode()))
-
     try:
-        # 读取返回的Content，超时好像都是发生在这里
+        # 发出请求
+        if data != '':
+            debug('Network: post')
+            debug(data)
+            request = urllib2.Request( url = url, data = data )
+            res = opener.open( request, timeout = 15 )
+            cj.save() # 只有在post时才保存新获得的cookie
+        else:
+            debug('Network: get')
+            res = opener.open( url, timeout = 15 )
+
+        debug('Network: Status Code - ' + str(res.getcode()))
+
         return GetContent( res )
+
     except Exception, e:
         # 自动重试，每张图最多3次
         if retry > 0:
             return Get( url, data, refer, retry-1 )
         else:
-            log(e, 'Error: unable to get %s [Timeout]' % url)
+            log(e, 'Error: unable to get %s [Timeout ?]' % url)
             return False
 
 # 检查http返回的内容是否有压缩
