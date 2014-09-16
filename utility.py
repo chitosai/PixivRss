@@ -69,8 +69,10 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
 
         opener = urllib2.build_opener( ckproc )
         opener.addheaders = [
+            ('Accept', '*/*'),
             ('Accept-Language', 'zh-CN,zh;q=0.8'),
             ('Accept-Charset', 'UTF-8,*;q=0.5'),
+            ('Accept-Encoding', 'gzip,deflate'),
             ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31'),
             ('Referer', refer)
         ]
@@ -80,7 +82,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             opener.addheaders = [('Cookie', 'lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164')]
 
         debug('Network: url - ' + url)
-        
+
         if data != '':
             debug('Network: post')
             debug(data)
@@ -88,6 +90,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             res = opener.open( request, timeout = 30 )
             cj.save() # 只有在post时才保存新获得的cookie
         else:
+            debug('Network: get')
             res = opener.open( url, timeout = 30 )
 
         debug('Network: Status Code - ' + str(res.getcode()))
