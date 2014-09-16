@@ -68,6 +68,11 @@ def get_weibo_nickname(pixiv_uid):
     # 没有
     if not len(r):
         pixiv_user_page = Get('http://www.pixiv.net/member.php?id=' + pixiv_uid)
+
+        if not pixiv_user_page:
+            debug('Error: failed to open pixiv member profile page')
+            return ''
+
         # 先剔除掉pixiv自己的weibo链接
         pixiv_user_page = pixiv_user_page.replace('http://weibo.com/2230227495', '')
         # download('a.html', 'http://www.pixiv.net/member.php?id=' + pixiv_uid)
@@ -78,7 +83,7 @@ def get_weibo_nickname(pixiv_uid):
             # 保存
             insert_id_map(pixiv_uid, weibo_uid)
         else:
-            debug('Processing: can\'t find WEIBO_URL')
+            debug('Processing: no WEIBO_URL')
             return ''
     # 有
     else:
@@ -86,6 +91,11 @@ def get_weibo_nickname(pixiv_uid):
 
     # 去weibo查昵称
     weibo_user_page = Get('http://weibo.com/' + weibo_uid)
+
+    if not weibo_user_page:
+        log('Error: failed to open weibo profile page')
+        return '';
+
     m = re.search('Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
     if m:
         return u' @%s' % m.group(1).decode('utf-8')
