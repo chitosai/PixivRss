@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, platform, os, sys, time, datetime, json, MySQLdb
+import urllib2, re, platform, os, sys, time, datetime, json, MySQLdb, zlib
 from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
 from config import *
+
+from StringIO import StringIO
+from gzip import GzipFile
 
 # 分隔符
 if platform.system() == 'Windows': SLASH = '\\'
@@ -94,7 +97,8 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             res = opener.open( url, timeout = 30 )
 
         debug('Network: Status Code - ' + str(res.getcode()))
-        return res.read()
+
+        return GetContent( res )
 
     except Exception, e:
         # 自动重试，每张图最多3次
@@ -104,6 +108,27 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             log(e, 'Error: unable to get ' + url)
             print 'Error: unable to get ' + url
             return False
+
+# 检查http返回的内容是否有压缩
+def GetContent( res ):
+    # 检查是否被GZIP
+    if res.info().get('Content-Encoding') == 'gzip':
+        buf = StringIO( res.read() )
+        f = GzipFile( fileobj=buf )
+        data = f.read()
+    elif res.info().get('Content-Encoding') == 'deflate':
+        try:
+            temp = zlib.decompress( res.read(), -zlib.MAX_WBITS )
+        except zlib.error:
+            temp = zlib.decompress( res.read() )
+        gz = StringIO( temp )
+        _res = urllib2.addinfourl( gz, res.headers, res.url, res.code )
+        _res.msg = res.msg
+        data = _res.read()
+    else:
+        data = res.read()
+
+    return data    
 
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
