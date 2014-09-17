@@ -107,7 +107,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         if retry > 0:
             return Get( url, data, refer, retry-1 )
         else:
-            log(e, 'Error: unable to get %s [Timeout ?]' % url)
+            log(e, 'Error: unable to get %s' % url)
             return False
 
 # 检查http返回的内容是否有压缩
