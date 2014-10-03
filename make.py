@@ -189,7 +189,7 @@ def FetchMediumSizeImage(pixiv_id):
     debug('Processing: medium size image url: ' + img_url)
     
     # 解析图片文件名
-    file_name_m = re.search('\d+_m\.(gif|jpg|jpeg|png)', img_url)
+    file_name_m = re.search('[\w\d_]+\.(gif|jpg|jpeg|png)', img_url)
     if not file_name_m:
         log(pixiv_id, 'Can\'t parse file name')
         return False
