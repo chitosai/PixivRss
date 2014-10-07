@@ -32,7 +32,7 @@ def ParseRankingPage(html):
         item['score'] = J(section).attr('data-total-score')
         item['preview'] = J(section).find('img._thumbnail').attr('data-src')
 
-        work_dom = J(section).children('a.work')
+        work_dom = J(section).children('.ranking-image-item').children('a.work')
 
         # 检查是否为动态图
         if 'ugoku-illust' in work_dom.children('div').attr('class'):
