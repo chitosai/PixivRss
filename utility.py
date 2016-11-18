@@ -178,8 +178,13 @@ def log(pixiv_id, message):
 
 # 读取exist.json
 def ReadExist(mode):
-    exist_file = open(EXIST_FILE % mode, 'r')
-    exist_list = json.load(exist_file)
+    try:
+        exist_file = open(EXIST_FILE % mode, 'r')
+        exist_list = json.load(exist_file)
+    except:
+        exist_file = open(EXIST_FILE % mode, 'w')
+        exist_list = {}
+
     exist_file.close()
     return exist_list
 
