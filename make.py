@@ -7,8 +7,16 @@ import pchan
 # 登录pixiv
 def LoginToPixiv():
     debug('Processing: LoginToPixiv')
-    data = 'pixiv_id=%s&pass=%s&skip=1&mode=login' % ( CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'] )
-    return Get( 'http://www.pixiv.net/login.php', data )
+    html = Get('https://accounts.pixiv.net/login')
+    m = re.search('name="post_key" value="(\w+)"', html)
+    if not m:
+        debug('Error: can not find post_key, please check')
+        return False
+    else:
+        post_key = m.group(1)
+
+    data = 'pixiv_id=%s&password=%s&source=accounts&return_to=http://www.pixiv.net/&g_recaptcha_response=&post_key=%s' % ( CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'], post_key )
+    return Get( 'https://accounts.pixiv.net/api/login?lang=zh', data, refer = 'https://accounts.pixiv.net/login', retry = 1 )
 
 # 解析排行页面
 def ParseRankingPage(html):
@@ -181,6 +189,12 @@ def FetchMediumSizeImage(pixiv_id):
     doc = J(html)
     img = doc('.works_display img')
 
+    f=open('___.html', 'w')
+    f.write(html)
+    f.close()
+
+    print img
+
     if not len(img):
         log(pixiv_id, 'CAN\'T FIND IMAGE in medium page')
         return False
@@ -275,6 +289,8 @@ def GenerateRss(mode, title):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
+        LoginToPixiv()
+        exit();
         mode = sys.argv[1]
         global MODE
 
@@ -288,8 +304,8 @@ if __name__ == '__main__':
         if 'r18' in mode:
             LoginToPixiv()
 
-        FetchPixiv(mode, title)
-        GenerateRss(mode, title)
+        print FetchPixiv(mode, title)
+        # GenerateRss(mode, title)
 
     else:
         print 'No params specified'

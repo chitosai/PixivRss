@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, platform, os, sys, time, datetime, json, MySQLdb, zlib
+import urllib2, re, platform, os, sys, time, datetime, json, zlib
+import MySQLdb, requests
 from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
 from config import *
@@ -61,28 +62,18 @@ def escape( text ):
 def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
     global ABS_PATH
 
-    cj = MozillaCookieJar( ABS_PATH + 'pixiv.cookie.txt' )
-
-    try :
-        cj.load( ABS_PATH + 'pixiv.cookie.txt' )
-    except:
-        pass # 还没有cookie只好拉倒咯
-
-    ckproc = urllib2.HTTPCookieProcessor( cj )
-
-    opener = urllib2.build_opener( ckproc )
-    opener.addheaders = [
-        ('Accept', '*/*'),
-        ('Accept-Language', 'zh-CN,zh;q=0.8'),
-        ('Accept-Charset', 'UTF-8,*;q=0.5'),
-        ('Accept-Encoding', 'gzip,deflate'),
-        ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31'),
-        ('Referer', refer)
+    headers = [
+        'Accept': '*/*',
+        'Accept-Language': 'zh-CN,zh;q=0.8',
+        'Accept-Charset': 'UTF-8,*;q=0.5',
+        'Accept-Encoding': 'gzip,deflate',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31',
+        'Referer': refer
     ]
 
     # 防止海外访问weibo变英文版
     if 'weibo.com' in url:
-        opener.addheaders = [('Cookie', 'lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164')]
+        headers['Cookie']='lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164'
 
     debug('Network: url - ' + url)
 
@@ -107,7 +98,8 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         if retry > 0:
             return Get( url, data, refer, retry-1 )
         else:
-            log(e, 'Error: unable to get %s' % url)
+            log(-1, e)
+            log(-1, 'Error: unable to get %s' % url)
             return False
 
 # 检查http返回的内容是否有压缩
