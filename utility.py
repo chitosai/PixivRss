@@ -79,8 +79,6 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
     debug('Network: url - ' + url)
 
     try:
-        # load cookie
-        cookie_file = open(COOKIE_FILE)
 
         # 发出请求
         if data != '':
@@ -88,9 +86,12 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             debug(data)
             r = requests.post(url, data = data, headers = headers, timeout = 10)
             # 用到post的情况基本只有登录
-            json.dump(r.cookies, cookie_file)
+            cookie_file = open(COOKIE_FILE, 'w')
+            json.dump(dict(r.cookies), cookie_file)
         else:
             debug('Network: get')
+            # load cookie
+            cookie_file = open(COOKIE_FILE, 'r')
             cookies = json.load(cookie_file)
             r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
 
