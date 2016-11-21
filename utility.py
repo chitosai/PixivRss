@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib2, re, platform, os, sys, time, datetime, json, zlib
+import urllib, urllib2, re, platform, os, sys, time, datetime, json, zlib, logging
 import MySQLdb, requests
 from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
@@ -49,6 +49,14 @@ MODE_ID = {
     'female'    : 7,
 }
 
+if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
+    import httplib as http_client
+    http_client.HTTPConnection.debuglevel = 1
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
+    requests_log = logging.getLogger("requests.packages.urllib3")
+    requests_log.setLevel(logging.DEBUG)
+    requests_log.propagate = True
 
 def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
     date = datetime.datetime.strptime(time_original, format_original)
@@ -60,7 +68,7 @@ def GetCurrentTime():
 def escape( text ):
     return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
-def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
+def Get( url, data = None, refer = 'http://www.pixiv.net/', retry = 3 ):
     global ABS_PATH
 
     headers = {
@@ -69,33 +77,36 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         'Accept-Charset': 'UTF-8,*;q=0.5',
         'Accept-Encoding': 'gzip,deflate',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31',
-        'Referer': refer
+        'Referer': refer,
+        'Origin': refer
     }
 
     # 防止海外访问weibo变英文版
     if 'weibo.com' in url:
         headers['Cookie']='lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164'
 
-    debug('Network: url - ' + url)
+    debug('[Network] New http request, url: ' + url)
 
     try:
 
         # 发出请求
-        if data != '':
-            debug('Network: post, payload:')
+        if data:
+            debug('[Network] Method: post, payload:')
             debug(data)
+            headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+            headers['X-Requested-With'] = 'XMLHttpRequest'
             r = requests.post(url, data = data, headers = headers, timeout = 10)
             # 用到post的情况基本只有登录
             cookie_file = open(COOKIE_FILE, 'w')
             json.dump(dict(r.cookies), cookie_file)
         else:
-            debug('Network: get')
+            debug('[Network] Method: get')
             # load cookie
             cookie_file = open(COOKIE_FILE, 'r')
             cookies = json.load(cookie_file)
             r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
 
-        debug('Network: Status Code - ' + str(r.status_code))
+        debug('[Network] Response status code: ' + str(r.status_code))
         return r.text
 
     except Exception, e:
@@ -104,7 +115,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
             return Get( url, data, refer, retry-1 )
         else:
             log(-1, e)
-            log(-1, 'Error: unable to get %s' % url)
+            log(-1, '[**Error] unable to get %s' % url)
             return False 
 
 # 输出文件

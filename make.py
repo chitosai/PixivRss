@@ -4,19 +4,68 @@ from utility import *
 
 import pchan
 
+# 模拟首次打开pixiv，保存cookie
+def InitPixivCookie():
+    r = requests.get('http://www.pixiv.net')
+    cookies = dict(r.cookies)
+    cookie_file = open(COOKIE_FILE, 'w')
+    json.dump(cookies, cookie_file)
+    cookie_file.close()
+
 # 登录pixiv
 def LoginToPixiv():
-    debug('Processing: LoginToPixiv')
-    html = Get('https://accounts.pixiv.net/login')
-    m = re.search('name="post_key" value="(\w+)"', html)
+    debug('[Processing] login to Pixiv')
+    debug('[Processing] search for post-key')
+
+    r1 = requests.get('https://accounts.pixiv.net/login')
+    m = re.search('name="post_key" value="(\w+)"', r1.text)
     if not m:
-        debug('Error: can not find post_key, please check')
+        debug('[**Error] can not find post_key, please check')
         return False
     else:
-        post_key = m.group(1)
+        post_key = str(m.group(1))
+        debug('[Processing] post-key found: %s' % post_key)
 
-    data = 'pixiv_id=%s&password=%s&source=accounts&return_to=http://www.pixiv.net/&g_recaptcha_response=&post_key=%s' % ( CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'], post_key )
-    return Get( 'https://accounts.pixiv.net/api/login?lang=zh', data, refer = 'https://accounts.pixiv.net/login', retry = 1 )
+    data = {
+        'pixiv_id': CONFIG['PIXIV_USER'],
+        'password': CONFIG['PIXIV_PASS'],
+        'source':   'pc',
+        'return_to': 'http://www.pixiv.net/',
+        'lang': 'zh',
+        'post_key': post_key
+    }
+
+    headers = {
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'zh-CN,zh;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Content-length': str(len(urllib.urlencode(data))),
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Host': 'accounts.pixiv.net',
+        'Origin': 'https://accounts.pixiv.net',
+        'Pragma': 'no-cache',
+        'Referer': 'https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Cookie': urllib.urlencode(dict(r1.cookies))
+    }
+
+    r2 = requests.post('https://accounts.pixiv.net/login', data = data, headers = headers)
+
+    # save cookie
+    cookie_file = open(COOKIE_FILE, 'w')
+    json.dump(dict(r2.cookies), cookie_file)
+    cookie_file.close()
+
+    # 登录正常时返回值应该是html页面，登录失败时会返回一个json
+    try:
+        error_msg = json.loads(r2.text)
+        if error_msg.error:
+            log(0, 'Login failed')
+    except:
+        debug('[Processing] Login success')
 
 # 解析排行页面
 def ParseRankingPage(html):
@@ -189,12 +238,6 @@ def FetchMediumSizeImage(pixiv_id):
     doc = J(html)
     img = doc('.works_display img')
 
-    f=open('___.html', 'w')
-    f.write(html)
-    f.close()
-
-    print img
-
     if not len(img):
         log(pixiv_id, 'CAN\'T FIND IMAGE in medium page')
         return False
@@ -289,8 +332,6 @@ def GenerateRss(mode, title):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        LoginToPixiv()
-        exit();
         mode = sys.argv[1]
         global MODE
 
