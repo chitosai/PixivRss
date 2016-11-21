@@ -52,7 +52,7 @@ def LoginToPixiv():
         'Cookie': urllib.urlencode(dict(r1.cookies))
     }
 
-    r2 = requests.post('https://accounts.pixiv.net/login', data = data, headers = headers)
+    r2 = requests.post('https://accounts.pixiv.net/login', data = data, headers = headers, timeout = 10)
 
     # save cookie
     cookie_file = open(COOKIE_FILE, 'w')
