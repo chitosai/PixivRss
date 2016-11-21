@@ -68,7 +68,7 @@ def GetCurrentTime():
 def escape( text ):
     return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
-def Get( url, data = None, refer = 'http://www.pixiv.net/', retry = 3 ):
+def Get( url, refer = 'http://www.pixiv.net/', retry = 3 ):
     global ABS_PATH
 
     headers = {
@@ -77,38 +77,21 @@ def Get( url, data = None, refer = 'http://www.pixiv.net/', retry = 3 ):
         'Accept-Charset': 'UTF-8,*;q=0.5',
         'Accept-Encoding': 'gzip,deflate',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31',
-        'Referer': refer,
-        'Origin': refer
+        'Referer': refer
     }
 
     # 防止海外访问weibo变英文版
     if 'weibo.com' in url:
         headers['Cookie']='lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164'
 
-    debug('[Network] New http request, url: ' + url)
-
+    debug('[Network] New http request, get: ' + url)
     try:
-
-        # 发出请求
-        if data:
-            debug('[Network] Method: post, payload:')
-            debug(data)
-            headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
-            headers['X-Requested-With'] = 'XMLHttpRequest'
-            r = requests.post(url, data = data, headers = headers, timeout = 10)
-            # 用到post的情况基本只有登录
-            cookie_file = open(COOKIE_FILE, 'w')
-            json.dump(dict(r.cookies), cookie_file)
-        else:
-            debug('[Network] Method: get')
-            # load cookie
-            cookie_file = open(COOKIE_FILE, 'r')
-            cookies = json.load(cookie_file)
-            r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
-
+        # load cookie
+        cookie_file = open(COOKIE_FILE, 'r')
+        cookies = json.load(cookie_file)
+        r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
         debug('[Network] Response status code: ' + str(r.status_code))
         return r.text
-
     except Exception, e:
         # 自动重试，每张图最多3次
         if retry > 0:
@@ -153,15 +136,18 @@ def debug(message):
     if not DEBUG : return
     print message
 
-def log(pixiv_id, message):
+def log(pixiv_id, message, type = 'DEBUG'):
     try:
         f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'a+')
     except:
         f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'w+')
     finally:
-        debug('DEBUG: ' + str(message))
+        debug('[%s] %s' % (type, message))
         f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + str(pixiv_id) + ', ' + str(message) + '\n' )
         f.close()
+
+def error(pixiv_id, message):
+    log(pixiv_id, message, '** ERROR **')
 
 # 读取exist.json
 def ReadExist(mode):
