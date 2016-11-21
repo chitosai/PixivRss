@@ -18,6 +18,7 @@ PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
 RSS_PATH     = ABS_PATH + 'rss' + SLASH
 LOG_PATH     = ABS_PATH + 'log' + SLASH
 
+COOKIE_FILE  = ABS_PATH + 'pixiv.cookie.txt'
 EXIST_FILE   = ABS_PATH + 'exist' + SLASH + '%s.json'
 
 MODE = {
@@ -62,14 +63,14 @@ def escape( text ):
 def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
     global ABS_PATH
 
-    headers = [
+    headers = {
         'Accept': '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.8',
         'Accept-Charset': 'UTF-8,*;q=0.5',
         'Accept-Encoding': 'gzip,deflate',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31',
         'Referer': refer
-    ]
+    }
 
     # 防止海外访问weibo变英文版
     if 'weibo.com' in url:
@@ -78,20 +79,23 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
     debug('Network: url - ' + url)
 
     try:
+        # load cookie
+        cookie_file = open(COOKIE_FILE)
+
         # 发出请求
         if data != '':
-            debug('Network: post')
+            debug('Network: post, payload:')
             debug(data)
-            request = urllib2.Request( url = url, data = data )
-            res = opener.open( request, timeout = 15 )
-            cj.save() # 只有在post时才保存新获得的cookie
+            r = requests.post(url, data = data, headers = headers, timeout = 10)
+            # 用到post的情况基本只有登录
+            json.dump(r.cookies, cookie_file)
         else:
             debug('Network: get')
-            res = opener.open( url, timeout = 15 )
+            cookies = json.load(cookie_file)
+            r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
 
-        debug('Network: Status Code - ' + str(res.getcode()))
-
-        return GetContent( res )
+        debug('Network: Status Code - ' + str(r.status_code))
+        return r.text
 
     except Exception, e:
         # 自动重试，每张图最多3次
@@ -100,28 +104,7 @@ def Get( url, data = '', refer = 'http://www.pixiv.net/', retry = 3 ):
         else:
             log(-1, e)
             log(-1, 'Error: unable to get %s' % url)
-            return False
-
-# 检查http返回的内容是否有压缩
-def GetContent( res ):
-    # 检查是否被GZIP
-    if res.info().get('Content-Encoding') == 'gzip':
-        buf = StringIO( res.read() )
-        f = GzipFile( fileobj=buf )
-        data = f.read()
-    elif res.info().get('Content-Encoding') == 'deflate':
-        try:
-            temp = zlib.decompress( res.read(), -zlib.MAX_WBITS )
-        except zlib.error:
-            temp = zlib.decompress( res.read() )
-        gz = StringIO( temp )
-        _res = urllib2.addinfourl( gz, res.headers, res.url, res.code )
-        _res.msg = res.msg
-        data = _res.read()
-    else:
-        data = res.read()
-
-    return data    
+            return False 
 
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
