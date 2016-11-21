@@ -65,10 +65,10 @@ def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
 def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
 
-def escape( text ):
+def escape(text):
     return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
-def Get( url, refer = 'http://www.pixiv.net/', retry = 3 ):
+def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
     global ABS_PATH
 
     headers = {
@@ -84,14 +84,19 @@ def Get( url, refer = 'http://www.pixiv.net/', retry = 3 ):
     if 'weibo.com' in url:
         headers['Cookie']='lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164'
 
-    debug('[Network] New http request, get: ' + url)
+    debug('[Network] new http request: get ' + url)
     try:
         # load cookie
         cookie_file = open(COOKIE_FILE, 'r')
         cookies = json.load(cookie_file)
         r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
-        debug('[Network] Response status code: ' + str(r.status_code))
-        return r.text
+        debug('[Network] response status code: ' + str(r.status_code))
+
+        # 判断返回内容是不是纯文本
+        if 'text/html' in r.headers['Content-Type']:
+            return r.text
+        else:
+            return r.content
     except Exception, e:
         # 自动重试，每张图最多3次
         if retry > 0:

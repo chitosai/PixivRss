@@ -63,18 +63,18 @@ def LoginToPixiv():
     try:
         error_msg = json.loads(r2.text)
         if error_msg.error:
-            log(0, 'Login failed')
+            log(-1, 'Login failed')
     except:
         debug('[Processing] Login success')
 
 # 解析排行页面
 def ParseRankingPage(html):
-    debug('Processing: ParseHTML')
+    debug('[Processing] parse rank page')
     doc = J(html)
     sections = doc('section.ranking-item')
 
     if not len(sections):
-        print 'CAN\'T FIND SECTION'
+        log(-1, 'cannot find section in rank page')
         exit(1)
 
     data = []
@@ -111,7 +111,7 @@ def ParseRankingPage(html):
 
 # 抓pixiv页面
 def FetchPixiv(mode, title):
-    debug('Processing: FetchPixiv')
+    debug('[Processing] get ranking page')
     global DEBUG, PREVIEW_PATH, TEMP_PATH
 
     # 读取已下载的图片列表
@@ -122,20 +122,22 @@ def FetchPixiv(mode, title):
 
     # 检查
     if not html:
+        log(-1, 'rank page is empty, what\'s wrong?')
         return
 
     # 解析排行
-    data = ParseRankingPage(html.decode('utf-8'))
+    data = ParseRankingPage(html)
     
     # 检查一下匹配结果
     if not len(data):
-        log(0, 'failed to get ranking list info')
+        log(-1, 'parse ranking page failed')
         return
 
     # 开始遍历
     count = 0
     posted_weibo_count = 0
 
+    debug('[Processing] start to download images from ranking list')
     for image in data:
         count += 1
 
@@ -144,17 +146,17 @@ def FetchPixiv(mode, title):
 
         pixiv_id = image['id']
 
-        debug('Starting: ' + str(count))
-        debug('processing: pixiv_id: ' + str(pixiv_id))
+        debug('[Processing] count: ' + str(count))
+        debug('[processing] pixiv_id: ' + str(pixiv_id))
 
         # 检查是否已下载
         if pixiv_id in exist_list:
-            debug('Duplicated: Image alreay exists')
+            debug('[Skip] duplicated: Image alreay exists')
             continue
 
         # 全年龄向的图抓大图并传到微博
         if 'r18' not in mode:
-            debug('Processing: NOT R18, will fetch medium size image')
+            debug('[Processing] NOT R18, will fetch medium size image')
 
             # 限制每小时最多发N条微博
             if posted_weibo_count > 5:
@@ -164,7 +166,7 @@ def FetchPixiv(mode, title):
 
             # 先判断是否为动图，如果是动图只能抓preview
             if image['isAnimated']:
-                debug('Processing: is-animated, downloading thumbnail: ' + image['preview'])
+                debug('[Processing] is-animated, downloading thumbnail: ' + image['preview'])
 
                 # 下载小尺寸预览图...
                 r = download(TEMP_PATH + pixiv_id + '.jpg', image['preview'])
@@ -190,12 +192,12 @@ def FetchPixiv(mode, title):
                 continue
 
             # 删除大图
-            debug('Processing: upload completed, deleting temp image')
+            debug('[Processing] upload completed, deleting temp image')
             os.remove(file_path)
 
         # r18图下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
         else:
-            debug('Processing: R18, downloading thumbnail: ' + image['preview'])
+            debug('[Processing] R18, downloading thumbnail: ' + image['preview'])
 
             # 下载小尺寸预览图...
             r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
@@ -216,11 +218,11 @@ def FetchPixiv(mode, title):
         item_info.pop('preview')
         exist_list[pixiv_id] = item_info
         # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
-        debug('Processing: update exist file')
+        debug('[Processing] update exist file')
         UpdateExist(mode, exist_list)
 
         # 暂停一下试试
-        debug('Waiting: ---\r\n')
+        debug('[Waiting] ---\r\n')
         time.sleep(1)
 
 # 抓中尺寸图
