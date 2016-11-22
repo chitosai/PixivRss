@@ -295,7 +295,7 @@ def GenerateRss(mode, title):
 
             desc += u'<p><img src="%s"></p>' % image['image']
             # 量子统计的图片
-            desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
+            # desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
 
             RSS += u'''<item>
                         <title><![CDATA[%s]]></title>
