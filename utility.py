@@ -89,8 +89,8 @@ def Get(url, refer = 'http://www.pixiv.net/'):
         r = requests.get(url, headers = headers, cookies = cookies, timeout = TIMEOUT)
         debug('[Network] response status code: %s' % r.status_code)
     except Exception, e:
-        error(-1, '[**Error] unable to get %s, error message:' % url)
-        error(-1, e)
+        log(-1, 'unable to get %s, error message:' % url)
+        log(-1, e)
         return False
 
     # 判断返回内容是不是纯文本
@@ -134,18 +134,15 @@ def debug(message):
     if not DEBUG : return
     print message
 
-def log(pixiv_id, message, type = 'DEBUG'):
+def log(pixiv_id, message):
     try:
         f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a+')
     except:
         f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'w+')
     finally:
-        debug('[%s] %s' % (type, message))
-        f.write(time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + str(pixiv_id) + ', ' + str(message) + '\n')
+        debug(message)
+        f.write('%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message))
         f.close()
-
-def error(pixiv_id, message):
-    log(pixiv_id, message, '** ERROR **')
 
 # 读取exist.json
 def ReadExist(mode):
@@ -174,7 +171,7 @@ class DB:
             self._ = MySQLdb.connect( CONFIG['DB_HOST'], CONFIG['DB_USER'], CONFIG['DB_PASS'], CONFIG['DB_NAME'], charset="utf8" )
             self.c  = self._.cursor( MySQLdb.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
         except Exception, e:
-            log(0, '数据库连接出错 : ' + str(e))
+            log(-1, '数据库连接出错 : %s' % e)
             exit(1)
 
     # 析构时关闭数据库
