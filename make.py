@@ -98,9 +98,6 @@ def FetchPixiv(mode, title):
     debug('[Processing] get ranking page')
     global DEBUG, PREVIEW_PATH, TEMP_PATH
 
-    # 读取已下载的图片列表
-    exist_list = ReadExist(mode)
-
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
@@ -117,11 +114,14 @@ def FetchPixiv(mode, title):
         log(-1, 'parse ranking page failed')
         return
 
+    # 读取已下载的图片列表
+    exist_list = ReadExist(mode)
+
     # 开始遍历
     count = 0
     posted_weibo_count = 0
 
-    debug('[Processing] start to download images from ranking list')
+    debug('[Processing] start to fetch images from ranking list')
     for image in data:
         count += 1
 
@@ -192,15 +192,15 @@ def FetchPixiv(mode, title):
                 continue
         
         # 写入list
-        item_info = {'fetch_time' : int(time.time())}
+        item = {'fetch_time' : int(time.time())}
         if 'r18' not in mode:
-            item_info['image'] = sina_url
+            item['image'] = sina_url
         else:
-            item_info['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
+            item['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
 
-        item_info.update(image)
-        item_info.pop('preview')
-        exist_list[pixiv_id] = item_info
+        item.update(image)
+        item.pop('preview')
+        exist_list[pixiv_id] = item
         # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
         debug('[Processing] update exist file')
         UpdateExist(mode, exist_list)
@@ -215,7 +215,7 @@ def FetchMediumSizeImage(pixiv_id):
     illust_url = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + str(pixiv_id)
     html = Get(illust_url)
 
-    # 三次抓取失败
+    # 抓取失败
     if not html:
         log(pixiv_id, 'Failed to get ' + illust_url)
         return False
