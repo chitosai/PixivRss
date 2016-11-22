@@ -86,7 +86,7 @@ def Get(url, refer = 'http://www.pixiv.net/'):
 
     debug('[Network] new http request: get ' + url)
     try:
-        r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
+        r = requests.get(url, headers = headers, cookies = cookies, timeout = TIMEOUT)
         debug('[Network] response status code: %s' % r.status_code)
     except Exception, e:
         error(-1, '[**Error] unable to get %s, error message:' % url)
