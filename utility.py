@@ -5,18 +5,14 @@ from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
 from config import *
 
-# 分隔符
-if platform.system() == 'Windows': SLASH = '\\'
-else: SLASH = '/'
+ABS_PATH     = sys.path[0]
+TEMP_PATH    = os.path.join(ABS_PATH, 'temp')
+PREVIEW_PATH = os.path.join(ABS_PATH, 'previews')
+RSS_PATH     = os.path.join(ABS_PATH, 'rss')
+LOG_PATH     = os.path.join(ABS_PATH, 'log')
 
-ABS_PATH     = sys.path[0] + SLASH
-TEMP_PATH    = ABS_PATH + 'temp' + SLASH 
-PREVIEW_PATH = ABS_PATH + 'previews' + SLASH
-RSS_PATH     = ABS_PATH + 'rss' + SLASH
-LOG_PATH     = ABS_PATH + 'log' + SLASH
-
-COOKIE_FILE  = ABS_PATH + 'pixiv.cookie.txt'
-EXIST_FILE   = ABS_PATH + 'exist' + SLASH + '%s.json'
+COOKIE_FILE  = os.path.join(ABS_PATH, 'pixiv.cookie.txt')
+EXIST_FILE   = os.path.join(ABS_PATH, 'exist', '%s.json')
 
 MODE = {
     'daily'     : u'每日',
@@ -66,8 +62,6 @@ def escape(text):
     return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
 def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
-    global ABS_PATH
-
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8',
@@ -147,12 +141,12 @@ def debug(message):
 
 def log(pixiv_id, message, type = 'DEBUG'):
     try:
-        f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'a+')
+        f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a+')
     except:
-        f = open( LOG_PATH + time.strftime('%Y-%m-%d.log', time.localtime(time.time())), 'w+')
+        f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'w+')
     finally:
         debug('[%s] %s' % (type, message))
-        f.write( time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + str(pixiv_id) + ', ' + str(message) + '\n' )
+        f.write(time.strftime('[%H:%M:%S] ',time.localtime(time.time())) + str(pixiv_id) + ', ' + str(message) + '\n')
         f.close()
 
 def error(pixiv_id, message):

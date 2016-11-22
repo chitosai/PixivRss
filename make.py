@@ -153,14 +153,14 @@ def FetchPixiv(mode, title):
                 debug('[Processing] is-animated, downloading thumbnail: ' + image['preview'])
 
                 # 下载小尺寸预览图...
-                r = download(TEMP_PATH + pixiv_id + '.jpg', image['preview'])
+                r = download(os.path.join(TEMP_PATH, pixiv_id + '.jpg'), image['preview'])
                 
                 # 三次抓取失败就先跳过
                 if not r:
                     log(pixiv_id, 'failed to get thumbnail')
                     continue
                 else:
-                    file_path = TEMP_PATH + pixiv_id + '.jpg'
+                    file_path = os.path.join(TEMP_PATH, pixiv_id + '.jpg')
 
             # 非动态图，可以抓中尺寸图
             else:
@@ -184,7 +184,7 @@ def FetchPixiv(mode, title):
             debug('[Processing] R18, downloading thumbnail: ' + image['preview'])
 
             # 下载小尺寸预览图...
-            r = download(PREVIEW_PATH + pixiv_id + '.jpg', image['preview'])
+            r = download(os.path.join(PREVIEW_PATH, pixiv_id + '.jpg'), image['preview'])
             
             # 三次抓取失败就先跳过
             if not r:
@@ -241,7 +241,7 @@ def FetchMediumSizeImage(pixiv_id):
         file_ext = file_name_m.group(1)
         debug('[Processing] medium size image file name: ' + file_name)
 
-    file_path = TEMP_PATH + file_name
+    file_path = os.path.join(TEMP_PATH, file_name)
 
     # 保存大图
     debug('[Processing] downloading medium size image')
