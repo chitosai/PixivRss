@@ -26,38 +26,30 @@ def LoginToPixiv():
     }
 
     headers = {
-        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
         'Host': 'accounts.pixiv.net',
         'Origin': 'https://accounts.pixiv.net',
-        'Referer': 'https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index',
+        'Referer': 'https://accounts.pixiv.net/login',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36',
-        'Upgrade-Insecure-Requests': '1',
         'X-Requested-With': 'XMLHttpRequest'
     }
 
-    r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, headers = headers, timeout = 10)
+    r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, cookies = r1.cookies, headers = headers, timeout = 10)
 
-    print r2.text
-    print '\n'
-    print r2.headers
-    print r2.cookies
+    # 检查是否登录成功
+    res = r2.json()
+    if not res['error']:
+        debug('[Processing] Login success')
+    else:
+        log(-1, 'Login failed!')
+        exit(1)
 
     # save cookie
     cookie_file = open(COOKIE_FILE, 'w')
     json.dump(dict(r2.cookies), cookie_file)
     cookie_file.close()
-
-    # 登录正常时返回值应该是html页面，登录失败时会返回一个json
-    try:
-        error_msg = json.loads(r2.text)
-        if error_msg.error:
-            log(-1, 'Login failed')
-    except:
-        debug('[Processing] Login success')
 
 # 解析排行页面
 def ParseRankingPage(html):

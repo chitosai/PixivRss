@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-import urllib, urllib2, re, platform, os, sys, time, datetime, json, zlib, logging
+import re, platform, os, sys, time, datetime, json, logging
 import MySQLdb, requests
 from cookielib import MozillaCookieJar
 from pyquery import PyQuery as J
 from config import *
-
-from StringIO import StringIO
-from gzip import GzipFile
 
 # 分隔符
 if platform.system() == 'Windows': SLASH = '\\'
