@@ -84,6 +84,7 @@ def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
         cookie_file = open(COOKIE_FILE, 'r')
         cookies = json.load(cookie_file)
         cookie_file.close()
+        cookies['p_ab_id'] = '1'
 
     # 防止海外访问weibo变英文版
     elif 'weibo.com' in url:

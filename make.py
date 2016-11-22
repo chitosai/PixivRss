@@ -104,10 +104,6 @@ def FetchPixiv(mode, title):
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
 
-    f=open('temp/rank.html', 'w')
-    f.write(html.encode('utf-8'))
-    f.close()
-
     # 检查
     if not html:
         log(-1, 'rank page is empty, what\'s wrong?')
@@ -210,7 +206,7 @@ def FetchPixiv(mode, title):
         UpdateExist(mode, exist_list)
 
         # 暂停一下试试
-        debug('[Waiting] ---\r\n')
+        debug('[Waiting] +1s\r\n')
         time.sleep(1)
 
 # 抓中尺寸图
@@ -224,36 +220,31 @@ def FetchMediumSizeImage(pixiv_id):
         log(pixiv_id, 'Failed to get ' + illust_url)
         return False
 
-    f = open('__.html', 'w')
-    f.write(html.encode('utf-8'))
-    f.close()
-    exit(1)
-
     # 解析图片地址
     doc = J(html)
     img = doc('.works_display img')
 
     if not len(img):
-        log(pixiv_id, 'CAN\'T FIND IMAGE in medium page')
+        log(pixiv_id, 'Can\'t find image element in medium page')
         return False
 
     img_url = J(img).attr('src')
-    debug('Processing: medium size image url: ' + img_url)
+    debug('[Processing] medium size image url: ' + img_url)
     
     # 解析图片文件名
     file_name_m = re.search('[\w\d_]+\.(gif|jpg|jpeg|png)', img_url)
     if not file_name_m:
-        log(pixiv_id, 'Can\'t parse file name')
+        log(pixiv_id, 'Can\'t parse file name of medium size image')
         return False
     else:
         file_name = file_name_m.group(0)
         file_ext = file_name_m.group(1)
-        debug('Processing: medium size image file name: ' + file_name)
+        debug('[Processing] medium size image file name: ' + file_name)
 
     file_path = TEMP_PATH + file_name
 
     # 保存大图
-    debug('Processing: downloading medium size image')
+    debug('[Processing] downloading medium size image')
     r = download(file_path, img_url, refer = illust_url)
 
     # 三次抓取失败就先跳过
@@ -266,7 +257,7 @@ def FetchMediumSizeImage(pixiv_id):
 
 # 输出rss文件
 def GenerateRss(mode, title):
-    debug('Processing: GenerateRSS')
+    debug('[Processing] GenerateRSS')
     global CONFIG, RSS_PATH
 
     # 读取exist.json
@@ -275,7 +266,7 @@ def GenerateRss(mode, title):
 
     for total in CONFIG['totals']:
         # 有时候因为pixiv那边的bug(?)会少几个条目，这时候只能以实际输出的数量为准了
-        if total > len(order) : 
+        if total > len(order):
             real_total = len(order)
         else:
             real_total = total
@@ -324,6 +315,8 @@ def GenerateRss(mode, title):
         f = open(RSS_PATH + mode + '-' + str(total) + '.xml', 'w')
         f.write(RSS.encode('utf-8'))
         f.close
+
+        debug('[Processing] All work done, exit.')
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
