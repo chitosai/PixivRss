@@ -61,7 +61,7 @@ def GetCurrentTime():
 def escape(text):
     return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
-def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
+def Get(url, refer = 'http://www.pixiv.net/'):
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8',
@@ -87,22 +87,17 @@ def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
     debug('[Network] new http request: get ' + url)
     try:
         r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
-        debug('[Network] response status code: ' + str(r.status_code))
-
-        # 判断返回内容是不是纯文本
-        if 'text/html' in r.headers['Content-Type']:
-            return r.text
-        else:
-            return r.content
+        debug('[Network] response status code: %s' % r.status_code)
     except Exception, e:
-        # 自动重试，每张图最多3次
-        debug(e)
-        if retry > 0:
-            return Get( url, refer, retry-1 )
-        else:
-            error(-1, e)
-            log(-1, '[**Error] unable to get %s' % url)
-            return False 
+        error(-1, '[**Error] unable to get %s, error message:' % url)
+        error(-1, e)
+        return False
+
+    # 判断返回内容是不是纯文本
+    if 'text/html' in r.headers['Content-Type']:
+        return r.text
+    else:
+        return r.content
 
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
