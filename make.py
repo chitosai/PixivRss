@@ -257,7 +257,7 @@ def FetchMediumSizeImage(pixiv_id):
 
 # 输出rss文件
 def GenerateRss(mode, title):
-    debug('[Processing] GenerateRSS')
+    debug('[Processing] generating rss')
     global CONFIG, RSS_PATH
 
     # 读取exist.json
@@ -312,11 +312,11 @@ def GenerateRss(mode, title):
         RSS += u'''</channel></rss>'''
 
         # 输出到文件
-        f = open(RSS_PATH + mode + '-' + str(total) + '.xml', 'w')
+        f = open(os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total)), 'w')
         f.write(RSS.encode('utf-8'))
         f.close
 
-        debug('[Processing] All work done, exit.')
+    debug('[Processing] All work done, exit.')
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -333,8 +333,8 @@ if __name__ == '__main__':
         if 'r18' in mode:
             LoginToPixiv()
 
-        print FetchPixiv(mode, title)
-        # GenerateRss(mode, title)
+        FetchPixiv(mode, title)
+        GenerateRss(mode, title)
 
     else:
         print 'No params specified'
