@@ -84,10 +84,6 @@ def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
         cookie_file = open(COOKIE_FILE, 'r')
         cookies = json.load(cookie_file)
         cookie_file.close()
-        cookies['p_ab_id'] = 1
-        headers['Cookie'] = urllib.urlencode(cookies).replace('&', '; ')
-        headers['host'] = 'www.pixiv.net'
-        headers['Upgrade-Insecure-Requests'] = '1'
 
     # 防止海外访问weibo变英文版
     elif 'weibo.com' in url:
@@ -95,8 +91,7 @@ def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
 
     debug('[Network] new http request: get ' + url)
     try:
-        r = requests.get(url, headers = headers, timeout = 10)
-        print r.request.headers
+        r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
         debug('[Network] response status code: ' + str(r.status_code))
 
         # 判断返回内容是不是纯文本
@@ -135,7 +130,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 
     # 写入
     try:
-        f = open(fname, 'w+')
+        f = open(fname, 'wb')
         f.write(data)
         f.close()
         return True
