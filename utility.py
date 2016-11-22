@@ -72,24 +72,34 @@ def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
     global ABS_PATH
 
     headers = {
-        'Accept': '*/*',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8',
-        'Accept-Charset': 'UTF-8,*;q=0.5',
-        'Accept-Encoding': 'gzip,deflate',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.64 Safari/537.31',
-        'Referer': refer
+        'Accept-Charset': 'UTF-8,*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, sdch',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36'
     }
 
+    if refer != '':
+        headers['Referer'] = refer
+
+    # pixiv登录状态
+    if 'pixiv.net' in url:
+        cookie_file = open(COOKIE_FILE, 'r')
+        cookies = json.load(cookie_file)
+        cookie_file.close()
+        cookies['p_ab_id'] = 1
+        headers['Cookie'] = urllib.urlencode(cookies).replace('&', '; ')
+        headers['host'] = 'www.pixiv.net'
+        headers['Upgrade-Insecure-Requests'] = '1'
+
     # 防止海外访问weibo变英文版
-    if 'weibo.com' in url:
+    elif 'weibo.com' in url:
         headers['Cookie']='lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164'
 
     debug('[Network] new http request: get ' + url)
     try:
-        # load cookie
-        cookie_file = open(COOKIE_FILE, 'r')
-        cookies = json.load(cookie_file)
-        r = requests.get(url, headers = headers, cookies = cookies, timeout = 10)
+        r = requests.get(url, headers = headers, timeout = 10)
+        print r.request.headers
         debug('[Network] response status code: ' + str(r.status_code))
 
         # 判断返回内容是不是纯文本
@@ -99,10 +109,11 @@ def Get(url, refer = 'http://www.pixiv.net/', retry = 3):
             return r.content
     except Exception, e:
         # 自动重试，每张图最多3次
+        debug(e)
         if retry > 0:
-            return Get( url, data, refer, retry-1 )
+            return Get( url, refer, retry-1 )
         else:
-            log(-1, e)
+            error(-1, e)
             log(-1, '[**Error] unable to get %s' % url)
             return False 
 

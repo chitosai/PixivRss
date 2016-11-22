@@ -4,14 +4,6 @@ from utility import *
 
 import pchan
 
-# 模拟首次打开pixiv，保存cookie
-def InitPixivCookie():
-    r = requests.get('http://www.pixiv.net')
-    cookies = dict(r.cookies)
-    cookie_file = open(COOKIE_FILE, 'w')
-    json.dump(cookies, cookie_file)
-    cookie_file.close()
-
 # 登录pixiv
 def LoginToPixiv():
     debug('[Processing] login to Pixiv')
@@ -29,9 +21,7 @@ def LoginToPixiv():
     data = {
         'pixiv_id': CONFIG['PIXIV_USER'],
         'password': CONFIG['PIXIV_PASS'],
-        'source':   'pc',
-        'return_to': 'http://www.pixiv.net/',
-        'lang': 'zh',
+        'source':   'accounts',
         'post_key': post_key
     }
 
@@ -41,18 +31,20 @@ def LoginToPixiv():
         'Accept-Language': 'zh-CN,zh;q=0.8',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Content-length': str(len(urllib.urlencode(data))),
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Host': 'accounts.pixiv.net',
         'Origin': 'https://accounts.pixiv.net',
-        'Pragma': 'no-cache',
         'Referer': 'https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Cookie': urllib.urlencode(dict(r1.cookies))
+        'Upgrade-Insecure-Requests': '1',
+        'X-Requested-With': 'XMLHttpRequest'
     }
 
-    r2 = requests.post('https://accounts.pixiv.net/login', data = data, headers = headers, timeout = 10)
+    r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, headers = headers, timeout = 10)
+
+    print r2.text
+    print '\n'
+    print r2.headers
+    print r2.cookies
 
     # save cookie
     cookie_file = open(COOKIE_FILE, 'w')
@@ -119,6 +111,10 @@ def FetchPixiv(mode, title):
 
     # 获取排行
     html = Get('http://www.pixiv.net/ranking.php?lang=zh&mode=' + mode, refer = '')
+
+    f=open('temp/rank.html', 'w')
+    f.write(html.encode('utf-8'))
+    f.close()
 
     # 检查
     if not html:
@@ -227,7 +223,7 @@ def FetchPixiv(mode, title):
 
 # 抓中尺寸图
 def FetchMediumSizeImage(pixiv_id):
-    debug('Processing: start to get medium size image')
+    debug('[Processing] start to get medium size image')
     illust_url = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + str(pixiv_id)
     html = Get(illust_url)
 
@@ -235,6 +231,11 @@ def FetchMediumSizeImage(pixiv_id):
     if not html:
         log(pixiv_id, 'Failed to get ' + illust_url)
         return False
+
+    f = open('__.html', 'w')
+    f.write(html.encode('utf-8'))
+    f.close()
+    exit(1)
 
     # 解析图片地址
     doc = J(html)
