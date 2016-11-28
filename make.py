@@ -140,9 +140,9 @@ def FetchPixiv(mode, title):
         count_real += 1
         if DEBUG and count_real > DEBUG_FETCH_MAX : return
 
-        # 全年龄向的图抓大图并传到微博
-        if 'r18' not in mode:
-            debug('[Processing] NOT R18, will fetch medium size image')
+        # 现在只有daily日榜会抓大图并发微博
+        if mode == 'daily':
+            debug('[Processing] daily, will fetch medium size image')
 
             # 限制每小时最多发N条微博
             if posted_weibo_count > 5:
@@ -176,14 +176,16 @@ def FetchPixiv(mode, title):
             sina_url = pchan.upload(pixiv_id, image, file_path, mode, title, count)
             if not sina_url:
                 continue
+            else:
+                image['image'] = sina_url
 
             # 删除大图
             debug('[Processing] upload completed, deleting temp image')
             os.remove(file_path)
 
-        # r18图下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
+        # 其他排行只下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
         else:
-            debug('[Processing] R18, downloading thumbnail: ' + image['preview'])
+            debug('[Processing] not daily, downloading thumbnail: ' + image['preview'])
 
             # 下载小尺寸预览图...
             r = download(os.path.join(PREVIEW_PATH, pixiv_id + '.jpg'), image['preview'])
@@ -192,17 +194,14 @@ def FetchPixiv(mode, title):
             if not r:
                 log(pixiv_id, 'failed to get thumbnail')
                 continue
+            else:
+                image['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
         
-        # 写入list
-        item = {'fetch_time' : int(time.time())}
-        if 'r18' not in mode:
-            item['image'] = sina_url
-        else:
-            item['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
+        # 记录抓取时间
+        image['fetch_time'] = int(time.time())
 
-        item.update(image)
-        item.pop('preview')
-        exist_list[pixiv_id] = item
+        image.pop('preview')
+        exist_list[pixiv_id] = image
         # 程序不知道什么时候会出错，所以每次有更新就写入到文件吧
         debug('[Processing] update exist file')
         UpdateExist(mode, exist_list)
