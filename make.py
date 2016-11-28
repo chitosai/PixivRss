@@ -119,14 +119,12 @@ def FetchPixiv(mode, title):
 
     # 开始遍历
     count = 0
+    count_real = 0
     posted_weibo_count = 0
 
     debug('[Processing] start to fetch images from ranking list')
     for image in data:
         count += 1
-
-        # DEBUG模式下最多运行次数
-        if DEBUG and count > DEBUG_FETCH_MAX : return
 
         pixiv_id = image['id']
 
@@ -137,6 +135,10 @@ def FetchPixiv(mode, title):
         if pixiv_id in exist_list:
             debug('[Skip] duplicated: Image alreay exists')
             continue
+
+        # DEBUG模式下最多运行次数
+        count_real += 1
+        if DEBUG and count_real > DEBUG_FETCH_MAX : return
 
         # 全年龄向的图抓大图并传到微博
         if 'r18' not in mode:
