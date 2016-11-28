@@ -96,14 +96,14 @@ def get_weibo_nickname(pixiv_uid):
         log(pixiv_uid, 'Error: failed to open weibo profile page')
         return '';
 
-    m = re.search('Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
+    m = re.search(u'Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
     if m:
-        return u' @%s' % m.group(1).decode('utf-8')
+        return u' @%s' % m.group(1)
     else:
         # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
-        m = re.search('<title>(.+?)的微博_微博', weibo_user_page)
+        m = re.search(u'<title>(.+?)的微博_微博', weibo_user_page)
         if m:
-            return u' @%s' % m.group(1).decode('utf-8')
+            return u' @%s' % m.group(1)
         else:
             log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
             return ''
