@@ -93,7 +93,7 @@ def get_weibo_nickname(pixiv_uid):
     weibo_user_page = Get('http://weibo.com/' + weibo_uid)
 
     if not weibo_user_page:
-        log('Error: failed to open weibo profile page')
+        log(pixiv_uid, 'Error: failed to open weibo profile page')
         return '';
 
     m = re.search('Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
@@ -105,7 +105,7 @@ def get_weibo_nickname(pixiv_uid):
         if m:
             return u' @%s' % m.group(1).decode('utf-8')
         else:
-            log('pixiv_uid:' + pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
+            log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
             return ''
 
 # 根据pixiv_user_id从数据库查找微博昵称
