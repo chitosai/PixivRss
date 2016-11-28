@@ -82,7 +82,12 @@ def Get(url, refer = 'http://www.pixiv.net/'):
 
     # 防止海外访问weibo变英文版
     elif 'weibo.com' in url:
-        headers['Cookie']='lang=zh-cn; SUB=Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D; UV5PAGE=usr512_114; UV5=usrmdins311164'
+        cookies = {
+            'lang': 'zh-cn',
+            'SUB': 'Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D',
+            'UV5PAGE': 'usr512_114',
+            'UV5': 'usrmdins311164'
+        }
 
     debug('[Network] new http request: get ' + url)
     try:
