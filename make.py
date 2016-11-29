@@ -317,6 +317,18 @@ def GenerateRss(mode, title):
         f.write(RSS.encode('utf-8'))
         f.close
 
+        # 把最新feed发送到GCE
+        data = {
+            'f': '%s-%s' % (mode, total),
+            'xml': RSS,
+            'key': GCE_KEY
+        }
+        r = requests.post(GCE_PROTAL, data = data)
+        if r.text != 'diva':
+            log(-1, 'call gce failed')
+        else:
+            debug('[Processing] %s-%s.xml sent to GCE successfully' % (mode, total))
+
     debug('[Processing] All work done, exit.')
 
 if __name__ == '__main__':
