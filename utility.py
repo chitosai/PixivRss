@@ -83,7 +83,7 @@ def Get(url, refer = 'http://www.pixiv.net/'):
         cookies['p_ab_id'] = '1'
 
         # apply proxy for pixiv
-        proxies['http'] = proxies['https'] = CONFIG['proxy']
+        proxies = CONFIG['proxy']
 
     # 防止海外访问weibo变英文版
     elif 'weibo.com' in url:
