@@ -73,12 +73,17 @@ def Get(url, refer = 'http://www.pixiv.net/'):
     if refer != '':
         headers['Referer'] = refer
 
+    proxies = {}
+
     # pixiv登录状态
     if 'pixiv.net' in url:
         cookie_file = open(COOKIE_FILE, 'r')
         cookies = json.load(cookie_file)
         cookie_file.close()
         cookies['p_ab_id'] = '1'
+
+        # apply proxy for pixiv
+        proxies['http'] = proxies['https'] = CONFIG['proxy']
 
     # 防止海外访问weibo变英文版
     elif 'weibo.com' in url:
@@ -91,7 +96,7 @@ def Get(url, refer = 'http://www.pixiv.net/'):
 
     debug('[Network] new http request: get ' + url)
     try:
-        r = requests.get(url, headers = headers, cookies = cookies, timeout = TIMEOUT)
+        r = requests.get(url, headers = headers, cookies = cookies, proxies = proxies, timeout = TIMEOUT)
         debug('[Network] response status code: %s' % r.status_code)
     except Exception, e:
         log(-1, 'unable to get %s, error message:' % url)

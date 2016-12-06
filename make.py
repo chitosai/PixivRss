@@ -36,7 +36,11 @@ def LoginToPixiv():
         'X-Requested-With': 'XMLHttpRequest'
     }
 
-    r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, cookies = r1.cookies, headers = headers, timeout = TIMEOUT)
+    proxies = {
+        'http': CONFIG['proxy'],
+        'https': CONFIG['proxy']
+    }
+    r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, cookies = r1.cookies, headers = headers, proxies = proxies, timeout = TIMEOUT)
 
     # 检查是否登录成功
     res = r2.json()
