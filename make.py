@@ -9,7 +9,12 @@ def LoginToPixiv():
     debug('[Processing] login to Pixiv')
     debug('[Processing] search for post-key')
 
-    r1 = requests.get('https://accounts.pixiv.net/login')
+    proxies = {
+        'http': CONFIG['proxy'],
+        'https': CONFIG['proxy']
+    }
+
+    r1 = requests.get('https://accounts.pixiv.net/login', proxies = proxies)
     m = re.search('name="post_key" value="(\w+)"', r1.text)
     if not m:
         debug('[**Error] can not find post_key, please check')
@@ -36,10 +41,6 @@ def LoginToPixiv():
         'X-Requested-With': 'XMLHttpRequest'
     }
 
-    proxies = {
-        'http': CONFIG['proxy'],
-        'https': CONFIG['proxy']
-    }
     r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, cookies = r1.cookies, headers = headers, proxies = proxies, timeout = TIMEOUT)
 
     # 检查是否登录成功
