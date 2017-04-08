@@ -76,7 +76,7 @@ def Get(url, refer = 'http://www.pixiv.net/'):
     proxies = {}
 
     # pixiv登录状态
-    if 'pixiv.net' in url:
+    if 'pixiv.net' in url or 'pximg.net' in url:
         cookie_file = open(COOKIE_FILE, 'r')
         cookies = json.load(cookie_file)
         cookie_file.close()
