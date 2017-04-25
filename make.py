@@ -9,7 +9,11 @@ def LoginToPixiv():
     debug('[Processing] login to Pixiv')
     debug('[Processing] search for post-key')
 
-    proxies = CONFIG['proxy']
+    # detect whether proxy is setted
+    if 'proxy' in CONFIG:
+        proxies = CONFIG['proxy']
+    else:
+        proxies = {}
 
     r1 = requests.get('https://accounts.pixiv.net/login', proxies = proxies)
     m = re.search('name="post_key" value="(\w+)"', r1.text)
