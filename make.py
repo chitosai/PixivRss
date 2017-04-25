@@ -146,8 +146,8 @@ def FetchPixiv(mode, title):
         count_real += 1
         if DEBUG and count_real > DEBUG_FETCH_MAX : return
 
-        # 现在只有daily日榜会抓大图并发微博
-        if mode == 'daily':
+        # 根据config中是否配置了weibo认证来决定是否发微博
+        if mode in WEIBO:
             debug('[Processing] daily, will fetch medium size image')
 
             # 限制每小时最多发N条微博
