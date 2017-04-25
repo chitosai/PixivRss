@@ -76,7 +76,7 @@ def ParseRankingPage(html):
         item['author'] = J(section).attr('data-user-name')
         item['date'] = J(section).attr('data-date')
         item['view'] = J(section).attr('data-view-count')
-        item['score'] = J(section).attr('data-total-score')
+        item['score'] = J(section).attr('data-rating-count')
         item['preview'] = J(section).find('img._thumbnail').attr('data-src')
 
         work_dom = J(section).children('.ranking-image-item').children('a.work')
@@ -294,7 +294,7 @@ def GenerateRss(mode, title):
             desc  = u'<p>画师：' + image['author']
             desc += u' - 上传于：' + image['date']
             desc += u' - 阅览数：' + image['view']
-            desc += u' - 总评分：' + image['score']
+            desc += u' - 点赞数：' + image['score']
             desc += u'</p>'
 
             # 插入动图提示
