@@ -88,7 +88,7 @@ def ParseRankingPage(html):
             item['isAnimated'] = False
 
         # pixiv id
-        m = re.search('&illust_id=(\d+)&', work_dom.attr['href'])
+        m = re.search('&(?:amp;)?illust_id=(\d+)&?', work_dom.attr['href'])
         item['id'] = m.group(1)
 
         # user id
