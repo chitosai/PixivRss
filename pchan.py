@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from utility import *
-from weibo import *
 
 # 上传到新浪图床
 def upload(pixiv_id, image, file_path, mode, title, count):
@@ -36,22 +35,25 @@ def upload(pixiv_id, image, file_path, mode, title, count):
 
 # 发微博
 def post(mode, message, filepath):
-    # init
-    c = APIClient(WEIBO[mode]['APP_KEY'], WEIBO[mode]['APP_SECRET'])
-    c.set_access_token(WEIBO[mode]['ACCESS_TOKEN'], 157679999)
-
     # 准备返回值，默认为False，上传完毕修改为图片url
     r = False
     
     # upload
     try:
         f = open(filepath, 'rb')
-
-        upload_r = c.statuses.upload.post(status = message, pic = f)
-        if 'error' in upload_r:
-            log(filepath, upload_r)
+        data = {
+            'status': message,
+            'rip': '61.133.235.27', # 发微博接口更新后要传发微博者的真实ip，搞个青海的ip凑凑数
+            'access_token': WEIBO[mode]['ACCESS_TOKEN']
+        }
+        files = {
+            'pic': f
+        }
+        res = requests.post('https://api.weibo.com/2/statuses/share.json', data = data, files = files)
+        if res.status_code != 200:
+            log(filepath, res.text)
         else:
-            r = upload_r['original_pic']
+            r = res.json()['original_pic']
 
     except Exception, err:
         log(filepath, err)
