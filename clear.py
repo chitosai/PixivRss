@@ -39,8 +39,9 @@ def clearPreviewImage():
         # 查pixiv_id
         pixiv_id = fname.split('.')[0]
         if pixiv_id not in EXIST:
-            f = PREVIEW_PATH + fname
+            f = os.path.join(PREVIEW_PATH, fname)
             os.remove(f)
+
 
 ClearExistItem()
 clearPreviewImage()
