@@ -71,7 +71,7 @@ def ParseRankingPage(html):
 
     for section in sections:
         item = {}
-        item['ranking'] = J(section).attr('data-rank')
+        item['ranking'] = int(J(section).attr('data-rank'))
         item['title'] = J(section).attr('data-title')
         item['author'] = J(section).attr('data-user-name')
         item['date'] = J(section).attr('data-date')
