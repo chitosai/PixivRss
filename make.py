@@ -269,7 +269,7 @@ def GenerateRss(mode, title):
 
     # 读取exist.json
     exist_list = ReadExist(mode)
-    order = sorted(exist_list, key = lambda item: item['ranking'])
+    order = sorted(exist_list.items(), key = lambda item: item['ranking'])
 
     for total in CONFIG['totals']:
         # 有时候因为pixiv那边的bug(?)会少几个条目，这时候只能以实际输出的数量为准了
