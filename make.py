@@ -139,6 +139,8 @@ def FetchPixiv(mode, title):
 
         # 检查是否已下载
         if pixiv_id in exist_list:
+            exist_list[pixiv_id]['ranking'] = image['ranking']
+            UpdateExist(mode, exist_list)
             debug('[Skip] duplicated: Image alreay exists')
             continue
 
