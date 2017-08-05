@@ -289,7 +289,7 @@ def GenerateRss(mode, title):
 
         # 只输出指定个条目
         for i in range(real_total):
-            image = order[i]
+            image = order[i][1]
             # 生成RSS中的item
             desc  = u'<p>画师：' + image['author']
             desc += u' - 上传于：' + image['date']
