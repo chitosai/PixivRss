@@ -311,7 +311,7 @@ def GenerateRss(mode, title):
                         <pubDate>%s</pubDate>
             　　       </item>''' % (
                     image['title'], 
-                    'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image.id, 
+                    'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id'], 
                     desc,
                     image['date']
                     )
