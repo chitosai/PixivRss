@@ -97,7 +97,7 @@ def ParseRankingPage(html):
 
         data.append(item)
 
-    return data
+    return data.sort(key = lambda _item:_item['ranking'])
 
 # 抓pixiv页面
 def FetchPixiv(mode, title):
