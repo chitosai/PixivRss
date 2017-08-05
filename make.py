@@ -97,7 +97,7 @@ def ParseRankingPage(html):
 
         data.append(item)
 
-    return sorted(data, key = lambda _item:_item['ranking'])
+    return data
 
 # 抓pixiv页面
 def FetchPixiv(mode, title):
@@ -289,7 +289,7 @@ def GenerateRss(mode, title):
 
         # 只输出指定个条目
         for i in range(real_total):
-            image = exist_list[order[i]]
+            image = order[i]
             # 生成RSS中的item
             desc  = u'<p>画师：' + image['author']
             desc += u' - 上传于：' + image['date']
@@ -311,7 +311,7 @@ def GenerateRss(mode, title):
                         <pubDate>%s</pubDate>
             　　       </item>''' % (
                     image['title'], 
-                    'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + order[i], 
+                    'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image.id, 
                     desc,
                     image['date']
                     )
