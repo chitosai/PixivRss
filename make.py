@@ -230,14 +230,13 @@ def FetchMediumSizeImage(pixiv_id):
         return False
 
     # 解析图片地址
-    doc = J(html)
-    img = doc('.works_display img')
-
-    if not len(img):
+    m = re.search('"original":"([^"]+?)"', html)
+    if not m:
         log(pixiv_id, 'Can\'t find image element in medium page')
         return False
+    else:
+        img_url = m.group(1).replace('\/', '/')
 
-    img_url = J(img).attr('src')
     debug('[Processing] medium size image url: ' + img_url)
     
     # 解析图片文件名
