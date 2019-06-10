@@ -54,19 +54,19 @@ def post(mode, message, filepath):
         }
         res = requests.post('https://api.weibo.com/2/statuses/share.json', data = data, files = files)
         if res.status_code != 200:
+            log('-1', 'weibo responsed with code != 200, code: %s' % res.status_code)
             if '20053' in res.text:
                 # {"error":"Your Weibo has been successfully released and needs manual review for 3 minutes. Please be patient.\nIf you have any questions, please contact the exclusive customer service, or call 4000960960, more help please enter the customer service center.","error_code":20053,"request":"/2/statuses/share.json"}
                 # 微博新增了这样一种情况，本身是作为失败返回的，并且也确实拿不到大图地址，但是微博却成功发出去了
                 # 所以这里返回个特殊字符串，通知最外层的make直接放原始小图url
                 r = WEIBO_MANUAL_REVIEW
             else:
-                log('-70421195', '')
                 log(filepath, res.text)
         else:
             r = res.json()['original_pic']
 
     except Exception, err:
-        log('-70421196', '')
+        log('-1', 'weibo responsed error')
         log(filepath, err)
     finally:
         f.close()
