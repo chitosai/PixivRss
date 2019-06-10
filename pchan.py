@@ -10,19 +10,12 @@ def upload(pixiv_id, image, file_path, mode, title, count):
     # 记录用户上榜
     if weibo_nickname != '':
         award_log(mode, image['uid'])
-    
-    # 因为微博客户端转换的短网址encode &时会出错，尝试自行提前转换一次
-    # 如果转换失败会记一个log，然后继续使用原始url
-    pixiv_url = 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id
-    dwz = Dwz(pixiv_url)
-    if dwz:
-        pixiv_url = dwz
 
     # 排行发微博
     debug('Processing: posting weibo')
     weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
                     % (title, count, image['author'], image['title'], \
-                     pixiv_url,
+                     'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id,
                      weibo_nickname)
 
     # 补充动态图说明

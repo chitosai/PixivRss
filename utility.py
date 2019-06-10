@@ -141,19 +141,6 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
         log(url, err)
         return False
 
-# 生成百度短网址
-def Dwz(url):
-    api = 'https://dwz.cn/admin/v2/create'
-    bodys = {'url': url}
-    headers = {'Content-Type': 'application/json', 'Token': DWZ_TOKEN}
-    try:
-        response = requests.post(url=api, data=json.dumps(bodys), headers=headers)
-        return json.loads(response.text)['ShortUrl']
-    except Exception, err:
-        log(10321, 'error occured in generating dwz')
-        log(10322, err)
-        return False
-
 # DEBUG
 def debug(message):
     global DEBUG
