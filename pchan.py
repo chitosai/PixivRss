@@ -60,11 +60,13 @@ def post(mode, message, filepath):
                 # 所以这里返回个特殊字符串，通知最外层的make直接放原始小图url
                 r = WEIBO_MANUAL_REVIEW
             else:
+                log('-70421195', '')
                 log(filepath, res.text)
         else:
             r = res.json()['original_pic']
 
     except Exception, err:
+        log('-70421196', '')
         log(filepath, err)
     finally:
         f.close()
