@@ -182,14 +182,18 @@ def FetchPixiv(mode, title):
             # 发到图床，这里如果返回false应该是上传失败了
             # @失败不会返回false，但是会记录log
             sina_url = pchan.upload(pixiv_id, image, file_path, mode, title, count)
+            if sina_url == WEIBO_MANUAL_REVIEW:
+                # 遇到渣浪处在人工审核模式，无法通过post接口的返回值得到大图地址，则改为下载小尺寸预览图到本地
+                r = download(os.path.join(PREVIEW_PATH, pixiv_id + '.jpg'), image['preview'])
+                image['image'] = 'http://rakuen.thec.me/PixivRss/previews/' + pixiv_id + '.jpg'
             if not sina_url:
                 continue
             else:
                 image['image'] = sina_url
+                # 删除大图
+                debug('[Processing] upload completed, deleting temp image')
+                os.remove(file_path)
 
-            # 删除大图
-            debug('[Processing] upload completed, deleting temp image')
-            os.remove(file_path)
 
         # 其他排行只下载小尺寸缩略图到rakuen.thec.me/PixivRss/previews/
         else:

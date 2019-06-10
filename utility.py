@@ -31,6 +31,8 @@ MODE = {
     'r18g'      : u'每日R-18G',
 }
 
+WEIBO_MANUAL_REVIEW = 'WEIBO_MANUAL_REVIEW'
+
 # 这个id是保存上榜log时用的
 MODE_ID = {
     'daily'     : 1,
