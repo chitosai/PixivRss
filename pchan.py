@@ -15,7 +15,7 @@ def upload(pixiv_id, image, file_path, mode, title, count):
     debug('Processing: posting weibo')
     weibo_text = u'#pixiv# %s排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
                     % (title, count, image['author'], image['title'], \
-                     'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + pixiv_id,
+                     'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id,
                      weibo_nickname)
 
     # 补充动态图说明
