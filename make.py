@@ -4,7 +4,7 @@ from utility import *
 
 import pchan
 
-MAX_WEIBO_PER_HOUR = 5
+MAX_WEIBO_PER_HOUR = 6
 
 # 登录pixiv
 def LoginToPixiv():
@@ -155,7 +155,7 @@ def FetchPixiv(mode, title):
             debug('[Processing] daily, will fetch medium size image')
 
             # 限制每小时最多发N条微博
-            if posted_weibo_count > MAX_WEIBO_PER_HOUR:
+            if posted_weibo_count >= MAX_WEIBO_PER_HOUR:
                 return
             else:
                 posted_weibo_count += 1
