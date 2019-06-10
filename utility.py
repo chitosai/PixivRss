@@ -145,7 +145,7 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 def Dwz(url):
     api = 'https://dwz.cn/admin/v2/create'
     bodys = {'url': url}
-    headers = {'Content-Type': 'application/json', 'Token': TOKEN}
+    headers = {'Content-Type': 'application/json', 'Token': DWZ_TOKEN}
     try:
         response = requests.post(url=api, data=json.dumps(bodys), headers=headers)
         return json.loads(response.text)['ShortUrl']
