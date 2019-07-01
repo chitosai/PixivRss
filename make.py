@@ -47,16 +47,15 @@ def LoginToPixiv():
     r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, cookies = r1.cookies, headers = headers, proxies = proxies, timeout = TIMEOUT)
 
     # 检查是否登录成功
-    res = r2.json()
-    if not res['error']:
-        debug('[Processing] Login success')
-    else:
-        log(-1, 'Login failed!')
+    cookies = dict(r2.cookies)
+    if not len(cookies):
+        log('Login failed', r2.text)
         exit(1)
 
+    debug('[Processing] Login success')
     # save cookie
     cookie_file = open(COOKIE_FILE, 'w')
-    json.dump(dict(r2.cookies), cookie_file)
+    json.dump(cookies, cookie_file)
     cookie_file.close()
 
 # 解析排行页面
