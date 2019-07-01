@@ -20,7 +20,7 @@ def LoginToPixiv():
     r1 = requests.get('https://accounts.pixiv.net/login', proxies = proxies)
     m = re.search('name="post_key" value="(\w+)"', r1.text)
     if not m:
-        debug('[**Error] can not find post_key, please check')
+        log('-1', '[**Error] can not find post_key, please check')
         return False
     else:
         post_key = str(m.group(1))
