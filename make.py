@@ -36,7 +36,7 @@ def LoginToPixiv():
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.8',
+        'Accept-Language': 'en_US; q=0.8',
         'Host': 'accounts.pixiv.net',
         'Origin': 'https://accounts.pixiv.net',
         'Referer': 'https://accounts.pixiv.net/login',
