@@ -8,7 +8,7 @@ MAX_WEIBO_PER_HOUR = 6
 # 抓pixiv页面
 def FetchPixiv(mode):
     debug('[Processing] get ranking page')
-    global DEBUG, PREVIEW_PATH, TEMP_PATH, MODE
+    global DEBUG, TEMP_PATH, MODE
 
     # 不知道为什么pixivpy的ranking关键字和p站本身不一样，转换一下
     ppyName = MODE[mode]['ppyName']
@@ -20,7 +20,7 @@ def FetchPixiv(mode):
         log(json.dumps(r))
         raise RuntimeError()
 
-    # 把获取到的list处理成我们需要的形式
+    # 筛选出我们需要的数据
     def filter(obj):
         return {
             'id': obj.id,
@@ -28,27 +28,22 @@ def FetchPixiv(mode):
             'author': obj.user.name,
             'date': obj.create_date,
             'view': obj.total_view,
-            'bookmarks': obj.total_bookmarks
+            'bookmarks': obj.total_bookmarks,
+            'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id
         }
-    
     data = map(filter, r.illusts)
+
+    # 丢给rss生成
+    GenerateRss(mode, data)
 
 
 # 输出rss文件
-def GenerateRss(mode, title):
+def GenerateRss(mode, data):
     debug('[Processing] generating rss')
-    global CONFIG, RSS_PATH
-
-    # 读取exist.json
-    exist_list = ReadExist(mode)
-    order = sorted(exist_list.items(), key = lambda item: item[1]['ranking'])
+    global CONFIG, RSS_PATH, MODE
+    title = MODE[mode]['title']
 
     for total in CONFIG['totals']:
-        # 有时候因为pixiv那边的bug(?)会少几个条目，这时候只能以实际输出的数量为准了
-        if total > len(order):
-            real_total = len(order)
-        else:
-            real_total = total
 
         RSS = u'''<rss version="2.0" encoding="utf-8">
         <channel><title>Pixiv%s排行 - 前%s</title>
@@ -59,34 +54,29 @@ def GenerateRss(mode, title):
     　　<lastBuildDate>%s</lastBuildDate>
     　　<generator>PixivRss by TheC</generator>''' % (title, total, GetCurrentTime())
 
-        # 只输出指定个条目
+        # 下标不要越界了
+        real_total = min(total, len(data))
         for i in range(real_total):
-            image = order[i][1]
-            # 生成RSS中的item
+            image = data[i]
+
             desc  = u'<p>画师：' + image['author']
-            desc += u' - 上传于：' + image['date']
-            desc += u' - 阅览数：' + image['view']
-            desc += u' - 点赞数：' + image['score']
+            desc += u' - 上传于：' + FormatTime(image['date'], '%Y-%m-%d %H:%M:%S')
+            desc += u' - 阅览数：' + str(image['view'])
+            desc += u' - 收藏数：' + str(image['bookmarks'])
             desc += u'</p>'
-
-            # 插入动图提示
-            if image.get('isAnimated', False): desc += u'<p>** 原图为动图 **</p>'
-
-            desc += u'<p><img src="%s"></p>' % image['image']
-            # 量子统计的图片
-            # desc += u'<p><img src="http://img.tongji.linezing.com/3205125/tongji.gif"></p>'
+            desc += u'<p><img src="https://pixiv.cat/%s.jpg"></p>' % image['preview']
 
             RSS += u'''<item>
-                        <title><![CDATA[%s]]></title>
-                        <link>%s</link>
-                        <description><![CDATA[%s]]></description>
-                        <pubDate>%s</pubDate>
-            　　       </item>''' % (
-                    image['title'], 
-                    'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + image['id'], 
-                    desc,
-                    image['date']
-                    )
+                    <title><![CDATA[%s]]></title>
+                    <link>%s</link>
+                    <description><![CDATA[%s]]></description>
+                    <pubDate>%s</pubDate>
+                </item>''' % (
+                                image['title'], 
+                                'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + str(image['id']), 
+                                desc,
+                                FormatTime(image['date'])
+                            )
 
         RSS += u'''</channel></rss>'''
 
@@ -95,7 +85,8 @@ def GenerateRss(mode, title):
         f.write(RSS.encode('utf-8'))
         f.close
 
-    debug('[Processing] All work done, exit.')
+    debug('[Processing] RSS file created')
+
 
 def CheckTokenStatus():
     tokens = ReadToken()
@@ -118,6 +109,7 @@ def CheckTokenStatus():
         if 'Authentication require' in str(err):
             log('Token expired, getting new token')
             UpdateToken()
+
 
 __TOKEN_GENERATED = False
 def UpdateToken():
@@ -146,6 +138,6 @@ if __name__ == '__main__':
             FetchPixiv(mode)
         else:
             print 'Unknown Mode'
-            Raise RuntimeError('Unknown Mode')
+            raise RuntimeError('Unknown Mode')
     else:
         print 'No params specified'

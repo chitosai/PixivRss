@@ -55,9 +55,9 @@ if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-def FormatTime( time_original, format_original = '%Y年%m月%d日 %H:%M' ):
-    date = datetime.datetime.strptime(time_original, format_original)
-    return date.strftime('%a, %d %b %Y %H:%M:%S +8000')
+def FormatTime(time_original, format_new='%a, %d %b %Y %H:%M:%S +9000'):
+    date = datetime.datetime.strptime(time_original, '%Y-%m-%dT%H:%M:%S+09:00')
+    return date.strftime(format_new)
 
 def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
