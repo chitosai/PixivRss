@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import re, platform, os, sys, time, datetime, json, logging
-import MySQLdb, requests
-from cookielib import MozillaCookieJar
-from pyquery import PyQuery as J
+import requests
+from pixivpy3 import *
 from config import *
+
+aapi = AppPixivAPI()
 
 ABS_PATH     = sys.path[0]
 TEMP_PATH    = os.path.join(ABS_PATH, 'temp')
@@ -12,6 +13,7 @@ RSS_PATH     = os.path.join(ABS_PATH, 'rss')
 LOG_PATH     = os.path.join(ABS_PATH, 'log')
 
 COOKIE_FILE  = os.path.join(ABS_PATH, 'pixiv.cookie.txt')
+TOKEN_FILE   = os.path.join(ABS_PATH, 'pixiv.token.txt')
 EXIST_FILE   = os.path.join(ABS_PATH, 'exist', '%s.json')
 
 MODE = {
@@ -147,7 +149,10 @@ def debug(message):
     if not DEBUG : return
     print message
 
-def log(pixiv_id, message):
+def log(pixiv_id, message = None):
+    if not message:
+        message = pixiv_id
+        pixiv_id = -1
     try:
         f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a+')
     except:
@@ -165,9 +170,9 @@ def ReadExist(mode):
     except:
         exist_file = open(EXIST_FILE % mode, 'w')
         exist_list = {}
-
-    exist_file.close()
-    return exist_list
+    finally:
+        exist_file.close()
+        return exist_list
 
 # 更新exist.json
 def UpdateExist(mode, exist_list):
@@ -175,6 +180,23 @@ def UpdateExist(mode, exist_list):
     exist_file = open(EXIST_FILE % mode, 'w')
     exist_file.write(exist_json)
     exist_file.close()
+
+def ReadToken():
+    try:
+        f = open(TOKEN_FILE, 'r')
+        tokens = json.load(f)
+    except:
+        f = open(TOKEN_FILE, 'w')
+        tokens = None
+    finally:
+        f.close()
+        return tokens
+
+def SaveToken(token):
+    f = open(TOKEN_FILE, 'w')
+    f.write(json.dumps(token))
+    f.close()
+
 
 # 数据库操作
 class DB:

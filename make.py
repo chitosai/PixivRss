@@ -6,100 +6,6 @@ import pchan
 
 MAX_WEIBO_PER_HOUR = 6
 
-# 登录pixiv
-def LoginToPixiv():
-    debug('[Processing] login to Pixiv')
-    debug('[Processing] search for post-key')
-
-    # detect whether proxy is setted
-    if 'proxy' in CONFIG:
-        proxies = CONFIG['proxy']
-    else:
-        proxies = {}
-
-    r1 = requests.get('https://accounts.pixiv.net/login', proxies = proxies)
-    m = re.search('name="post_key" value="(\w+)"', r1.text)
-    if not m:
-        log('-1', '[**Error] can not find post_key, please check')
-        return False
-    else:
-        post_key = str(m.group(1))
-        debug('[Processing] post-key found: %s' % post_key)
-
-    data = {
-        'pixiv_id': CONFIG['PIXIV_USER'],
-        'password': CONFIG['PIXIV_PASS'],
-        'source':   'accounts',
-        'post_key': post_key
-    }
-
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en_US; q=0.8',
-        'Host': 'accounts.pixiv.net',
-        'Origin': 'https://accounts.pixiv.net',
-        'Referer': 'https://accounts.pixiv.net/login',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36',
-        'X-Requested-With': 'XMLHttpRequest'
-    }
-
-    r2 = requests.post('https://accounts.pixiv.net/api/login', data = data, cookies = r1.cookies, headers = headers, proxies = proxies, timeout = TIMEOUT)
-
-    # 检查是否登录成功
-    cookies = dict(r2.cookies)
-    if not len(cookies):
-        log('Login failed', r2.text)
-        exit(1)
-
-    debug('[Processing] Login success')
-    # save cookie
-    cookie_file = open(COOKIE_FILE, 'w')
-    json.dump(cookies, cookie_file)
-    cookie_file.close()
-
-# 解析排行页面
-def ParseRankingPage(html):
-    debug('[Processing] parse rank page')
-    doc = J(html)
-    sections = doc('section.ranking-item')
-
-    if not len(sections):
-        log(-1, 'cannot find section in rank page')
-        exit(1)
-
-    data = []
-
-    for section in sections:
-        item = {}
-        item['ranking'] = int(J(section).attr('data-rank'))
-        item['title'] = J(section).attr('data-title')
-        item['author'] = J(section).attr('data-user-name')
-        item['date'] = J(section).attr('data-date')
-        item['view'] = J(section).attr('data-view-count')
-        item['score'] = J(section).attr('data-rating-count')
-        item['preview'] = J(section).find('img._thumbnail').attr('data-src')
-
-        work_dom = J(section).children('.ranking-image-item').children('a.work')
-
-        # 检查是否为动态图
-        if 'ugoku-illust' in work_dom.attr('class'):
-            item['isAnimated'] = True
-        else:
-            item['isAnimated'] = False
-
-        # pixiv id
-        m = re.search('&(?:amp;)?illust_id=(\d+)&?', work_dom.attr['href'])
-        item['id'] = m.group(1)
-
-        # user id
-        m = re.search('member\.php\?id=(\d+)&', J(section).children('a.user-container').attr['href'])
-        item['uid'] = m.group(1)
-
-        data.append(item)
-
-    return data
-
 # 抓pixiv页面
 def FetchPixiv(mode, title):
     debug('[Processing] get ranking page')
@@ -331,6 +237,44 @@ def GenerateRss(mode, title):
 
     debug('[Processing] All work done, exit.')
 
+def CheckTokenStatus():
+    tokens = ReadToken()
+    if not tokens:
+        log('Token file empty, getting new token')
+        UpdateToken()
+    else:
+        debug('Token file loaded')
+        aapi.set_auth(tokens['response']['access_token'])
+    try:
+        debug('Verifying token')
+        r = aapi.illust_ranking('day_r18')
+        if 'error' in r:
+            log('Token error? check it, will try to get a new token now')
+            log(json.dumps(r.error))
+            UpdateToken()
+        else:
+            debug('Token OK')
+    except PixivError as err:
+        if 'Authentication require' in str(err):
+            log('Token expired, getting new token')
+            UpdateToken()
+
+__TOKEN_GENERATED = False
+def UpdateToken():
+    global __TOKEN_GENERATED
+    if __TOKEN_GENERATED:
+        log('Already tried to get token once, this method shouldn\'t be called twice!')
+        raise RuntimeError('Already tried to get token once, this method shouldn\'t be called twice!') # end the process
+    else:
+        log('Getting new token')
+        tokens = aapi.login(CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'])
+        aapi.set_auth(tokens.response.access_token)
+        SaveToken(tokens)
+        log('New token saved')
+        __TOKEN_GENERATED = True
+        return tokens
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         mode = sys.argv[1]
@@ -343,8 +287,7 @@ if __name__ == '__main__':
             print 'Unknown Mode'
             exit(1)
 
-        if 'r18' in mode:
-            LoginToPixiv()
+        CheckTokenStatus()
 
         FetchPixiv(mode, title)
         GenerateRss(mode, title)
