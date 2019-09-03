@@ -17,20 +17,20 @@ TOKEN_FILE   = os.path.join(ABS_PATH, 'pixiv.token.txt')
 EXIST_FILE   = os.path.join(ABS_PATH, 'exist', '%s.json')
 
 MODE = {
-    'daily'     : u'每日',
-    'weekly'    : u'每周',
-    'monthly'   : u'每月',
-    'rookie'    : u'新人',
-    'original'  : u'原创',
-    'male'      : u'男性向作品',
-    'female'    : u'女性向作品',
+    'daily'     : { 'title': u'每日',       'ppyName': 'day' },
+    'weekly'    : { 'title': u'每周',       'ppyName': 'week' },
+    'monthly'   : { 'title': u'每月',       'ppyName': 'month' },
+    'rookie'    : { 'title': u'新人',       'ppyName': 'week_rookie' },
+    'original'  : { 'title': u'原创',       'ppyName': 'week_original' },
+    'male'      : { 'title': u'男性向作品', 'ppyName': 'day_male' },
+    'female'    : { 'title': u'女性向作品', 'ppyName': 'day_female' },
     
     # r18
-    'daily_r18' : u'每日R-18',
-    'weekly_r18': u'每周R-18',
-    'male_r18'  : u'男性向R-18',
-    'female_r18': u'女性向R-18',
-    'r18g'      : u'每日R-18G',
+    'daily_r18' : { 'title': u'每日R-18',   'ppyName': 'day_r18' },
+    'weekly_r18': { 'title': u'每周R-18',   'ppyName': 'week_r18' },
+    'male_r18'  : { 'title': u'男性向R-18', 'ppyName': 'day_male_r18' },
+    'female_r18': { 'title': u'女性向R-18', 'ppyName': 'day_female_r18' },
+    'r18g'      : { 'title': u'每日R-18G',  'ppyName': 'week_r18g' }
 }
 
 WEIBO_MANUAL_REVIEW = 'WEIBO_MANUAL_REVIEW'
