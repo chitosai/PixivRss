@@ -146,7 +146,7 @@ def award_log(pixiv_uid):
 
 # 检查有没有发过
 def check_if_posted(pixiv_id):
-    sql = 'SELECT `pixiv_id` FROM `pixiv_post_history` WHERE `pixiv_id` = %s'
+    sql = 'SELECT `pixiv_id` FROM `weibo_post_history` WHERE `pixiv_id` = %s'
     return db.Query(sql, (pixiv_id,))
 
 
