@@ -2,33 +2,6 @@
 from utility import *
 
 
-def FetchPixiv(mode):
-    aapi = ExtendedPixivPy()
-    # 获取排行
-    debug('[Processing] get %s ranking page' % mode)
-    r = aapi.illust_ranking(mode)
-    if 'error' in r:
-        log('Failed to get %s ranking list, will exit' % mode)
-        log(json.dumps(r))
-        raise RuntimeError()
-
-    # 筛选出我们需要的数据
-    def filter(obj):
-        return {
-            'id': obj.id,
-            'title': obj.title,
-            'author': obj.user.name,
-            'date': obj.create_date,
-            'view': obj.total_view,
-            'bookmarks': obj.total_bookmarks,
-            'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id
-        }
-    data = map(filter, r.illusts)
-
-    # 丢给rss生成
-    GenerateRss(mode, data)
-
-
 def GenerateRss(mode, data):
     debug('[Processing] generating rss')
     global CONFIG, RSS_PATH, MODE
@@ -89,5 +62,6 @@ if __name__ == '__main__':
     if mode not in MODE:
         raise RuntimeError('Unknown ranking name')
     
-    FetchPixiv(mode)
-        
+    aapi = ExtendedPixivPy()
+    data = FetchPixiv(aapi, mode)
+    GenerateRss(mode, data)

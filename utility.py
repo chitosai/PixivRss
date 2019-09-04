@@ -1,45 +1,8 @@
 # -*- coding: utf-8 -*-
-import re, os, sys, time, datetime, json, logging
+import re, time, datetime, json, logging, MySQLdb
 import requests
 from pixivpy3 import *
 from config import *
-
-ABS_PATH     = sys.path[0]
-TEMP_PATH    = os.path.join(ABS_PATH, 'temp')
-RSS_PATH     = os.path.join(ABS_PATH, 'rss')
-LOG_PATH     = os.path.join(ABS_PATH, 'log')
-
-TOKEN_FILE   = os.path.join(ABS_PATH, 'pixiv.token.txt')
-
-MODE = {
-    'daily'     : { 'title': u'每日',       'ppyName': 'day' },
-    'weekly'    : { 'title': u'每周',       'ppyName': 'week' },
-    'monthly'   : { 'title': u'每月',       'ppyName': 'month' },
-    'rookie'    : { 'title': u'新人',       'ppyName': 'week_rookie' },
-    'original'  : { 'title': u'原创',       'ppyName': 'week_original' },
-    'male'      : { 'title': u'男性向作品', 'ppyName': 'day_male' },
-    'female'    : { 'title': u'女性向作品', 'ppyName': 'day_female' },
-    
-    # r18
-    'daily_r18' : { 'title': u'每日R-18',   'ppyName': 'day_r18' },
-    'weekly_r18': { 'title': u'每周R-18',   'ppyName': 'week_r18' },
-    'male_r18'  : { 'title': u'男性向R-18', 'ppyName': 'day_male_r18' },
-    'female_r18': { 'title': u'女性向R-18', 'ppyName': 'day_female_r18' },
-    'r18g'      : { 'title': u'每日R-18G',  'ppyName': 'week_r18g' }
-}
-
-WEIBO_MANUAL_REVIEW = 'WEIBO_MANUAL_REVIEW'
-
-# 这个id是保存上榜log时用的
-MODE_ID = {
-    'daily'     : 1,
-    'weekly'    : 2,
-    'monthly'   : 3,
-    'rookie'    : 4,
-    'original'  : 5,
-    'male'      : 6,
-    'female'    : 7,
-}
 
 if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     import httplib as http_client
@@ -50,15 +13,12 @@ if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-def FormatTime(time_original, format_new='%a, %d %b %Y %H:%M:%S +9000'):
+def FormatTime(time_original, format_new = '%a, %d %b %Y %H:%M:%S +9000'):
     date = datetime.datetime.strptime(time_original, '%Y-%m-%dT%H:%M:%S+09:00')
     return date.strftime(format_new)
 
 def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
-
-def escape(text):
-    return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
 def Get(url, refer = 'http://www.pixiv.net/'):
     headers = {
@@ -174,25 +134,24 @@ class DB:
         self._.close()
 
     # 查询
-    def Query( self, sql, data = None):
+    def Query(self, sql, data = None):
         try:
-            if data : 
-                self.c.execute( sql, data )
+            if data: 
+                self.c.execute(sql, data)
             else : 
-                self.c.execute( sql )
-
+                self.c.execute(sql)
             return self.c.fetchall()
         except Exception, e:
-            log(0,  str(e[0]) + ' : ' + e[1])
+            log(0, str(e[0]) + ' : ' + e[1])
             return False
 
     # 执行
-    def Run( self, sql, data ):
+    def Run(self, sql, data):
         try:
-            self.c.execute( sql, data )
+            self.c.execute(sql, data)
             return self._.insert_id()
         except Exception, e:
-            log(0,  str(e[0]) + ' : ' + e[1])
+            log(0, str(e[0]) + ' : ' + e[1])
             return False
 
 class ExtendedPixivPy(AppPixivAPI):
@@ -252,3 +211,27 @@ class ExtendedPixivPy(AppPixivAPI):
     def illust_ranking(self, rank_name):
         ppyName = MODE[rank_name]['ppyName']
         return super(self.__class__, self).illust_ranking(ppyName)
+
+def FetchPixiv(aapi, mode):
+    # 获取排行
+    debug('Get %s ranking page' % mode)
+    r = aapi.illust_ranking(mode)
+    if 'error' in r:
+        log('Failed to get %s ranking list, will exit' % mode)
+        log(json.dumps(r))
+        raise RuntimeError()
+
+    # 筛选出我们需要的数据
+    def filter(obj):
+        return {
+            'id': obj.id,
+            'title': obj.title,
+            'author': obj.user.name,
+            'date': obj.create_date,
+            'view': obj.total_view,
+            'bookmarks': obj.total_bookmarks,
+            'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id,
+            'medium': obj.image_urls.medium
+        }
+    data = map(filter, r.illusts)
+    return data
