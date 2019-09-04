@@ -3,42 +3,37 @@ from utility import *
 
 db = DB()
 
-# 上传到新浪图床
-def upload(pixiv_id, image, file_path):
+
+def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
 
+    # 排行发微博
+    SetLogLevel(+1)
+    debug('Posting weibo')
+    weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
+                    % (image['ranking'], image['author'], image['title'], \
+                     'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + str(pixiv_id),
+                     weibo_nickname)
+
+    sina_url = do_post_weibo(weibo_text, file_path)
+    # 渣浪图片地址
+    if not sina_url:
+        log(pixiv_id, 'failed to get image url from sina')
+        return False
+    debug('Post success, image url:' + sina_url)
+
     # 记录用户上榜
     if weibo_nickname != '':
         award_log(image['uid'])
-
-    # 排行发微博
-    debug('Processing: posting weibo')
-    weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
-                    % (image['ranking'], image['author'], image['title'], \
-                     'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id,
-                     weibo_nickname)
-
-    sina_url = post(weibo_text, file_path)
-
-    # 渣浪图片地址
-    if sina_url == WEIBO_MANUAL_REVIEW:
-        log(pixiv_id, 'sina in manual review mode')
-        return WEIBO_MANUAL_REVIEW
-    elif sina_url == False:
-        log(pixiv_id, 'failed to get image url from sina')
-        return False
-
-    debug('Processing: post success, image url:' + sina_url)
-
+        
     return sina_url
 
-# 发微博
-def post(message, filepath):
+
+def do_post_weibo(message, filepath):
     # 准备返回值，默认为False，上传完毕修改为图片url
     r = False
-    
     # upload
     try:
         f = open(filepath, 'rb')
@@ -62,13 +57,14 @@ def post(message, filepath):
                 log(filepath, res.text)
         else:
             r = res.json()['original_pic']
-
     except Exception, err:
         log('-1', 'weibo responsed error')
         log(filepath, err)
     finally:
         f.close()
+        os.remove(filepath)
         return r
+
 
 # 下载中尺寸图
 def download_medium_image(illust):
@@ -78,6 +74,7 @@ def download_medium_image(illust):
     aapi.download(illust['medium'], TEMP_PATH, filename)
     debug('Download finished, saved to %s' % filepath)
     return filepath
+
 
 # 根据pixiv_user_id查找微博昵称
 def get_weibo_nickname(pixiv_uid):
@@ -93,7 +90,6 @@ def get_weibo_nickname(pixiv_uid):
             return ''
         # 从签名里匹配
         signature = user_profile.user.comment
-        print signature
         m = re.search('http://(?:www\.)?weibo\.com/(.+?)[\r\n\s]', signature, re.S)
         if m:
             weibo_uid = m.group(1)
@@ -125,15 +121,18 @@ def get_weibo_nickname(pixiv_uid):
             log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + weibo_uid)
             return ''
 
+
 # 根据pixiv_user_id从数据库查找微博昵称
 def get_weibo_uid_by_(pixiv_uid):
     sql = 'SELECT `weibo_uid` FROM `pixiv_weibo_id_map` WHERE `pixiv_uid` = %s'
     return db.Query(sql, (pixiv_id,))
 
+
 # 插入pixiv_user_id到weibo_user_id的映射
 def insert_id_map(pixiv_uid, weibo_uid):
     sql = 'INSERT INTO `pixiv_weibo_id_map` ( `pixiv_uid`, `weibo_uid` ) VALUES ( %s, %s )'
     return db.Run(sql, (pixiv_uid, weibo_uid))
+
 
 # 记录用户上榜
 def award_log(pixiv_uid):
@@ -141,6 +140,7 @@ def award_log(pixiv_uid):
     # 数据库里原本的记录就暂且不处理了，反正到现在5年了也只有15000行
     sql = 'INSERT INTO `award_log` ( `type`, `uid` ) VALUES ( %s, %s )'
     return db.Run(sql, (1, pixiv_uid))
+
 
 # 检查有没有发过
 def check_if_posted(pixiv_id):
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         pixiv_id = illust['id']
         ranking += 1
         debug('* Itering no.%s' % ranking)
-        SetLogLevel(2)
+        SetLogLevel(+2)
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
         if r and len(r):
@@ -174,12 +174,12 @@ if __name__ == '__main__':
         filepath = download_medium_image(illust)
         # 上传
         illust['ranking'] = ranking
-        upload(pixiv_id, illust, filepath)
+        post_weibo(pixiv_id, illust, filepath)
         count += 1
-        if count >= WEIBO_PER_HOUR:
+        if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
             debug('Reached WEIBO_PER_HOUR: %s' % WEIBO_PER_HOUR)
             break
         # +1s
         time.sleep(1)
-    SetLogLevel(0)
+    SetLogLevel(-2)
     debug('All job done, processed %s item(s)' % count)

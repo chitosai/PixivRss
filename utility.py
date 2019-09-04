@@ -84,9 +84,9 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
         return False
 
 __LOG_LEVEL = 0
-def SetLogLevel(level):
+def SetLogLevel(delta):
     global __LOG_LEVEL
-    __LOG_LEVEL = level
+    __LOG_LEVEL += delta
 
 # DEBUG
 def debug(message):
