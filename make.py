@@ -151,5 +151,5 @@ if __name__ == '__main__':
         raise RuntimeError('Unknown Mode')
     
     aapi = ExtendedPixivPy()
-    # FetchPixiv(mode)
+    FetchPixiv(mode)
         
