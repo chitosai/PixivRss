@@ -73,7 +73,7 @@ def post(message, filepath):
 # 下载中尺寸图
 def download_medium_image(aapi, illust):
     debug('Download medium size image')
-    filename = '%s.jpg' % illust.id
+    filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
     aapi.download(illust['medium'], TEMP_PATH, filename)
     debug('Download finished, saved to %s' % filepath)
@@ -167,7 +167,7 @@ if __name__ == '__main__':
         ranking += 1
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
-        if len(r):
+        if r and len(r):
             debug('%s: Ranking. %s posted, skip' % (count, ranking))
             continue
         # 下载medium尺寸图到本地

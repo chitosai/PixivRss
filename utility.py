@@ -4,6 +4,7 @@ import requests
 from pixivpy3 import *
 from config import *
 
+
 if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     import httplib as http_client
     http_client.HTTPConnection.debuglevel = 1
@@ -13,12 +14,15 @@ if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
+
 def FormatTime(time_original, format_new = '%a, %d %b %Y %H:%M:%S +9000'):
     date = datetime.datetime.strptime(time_original, '%Y-%m-%dT%H:%M:%S+09:00')
     return date.strftime(format_new)
 
+
 def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
+
 
 def Get(url, refer = 'http://www.pixiv.net/'):
     headers = {
@@ -69,6 +73,7 @@ def Get(url, refer = 'http://www.pixiv.net/'):
     else:
         return r.content
 
+
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
     # 检查文件是否存在
@@ -98,11 +103,13 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
         log(url, err)
         return False
 
+
 # DEBUG
 def debug(message):
     global DEBUG
     if DEBUG:
         print message
+
 
 def log(pixiv_id, message = None):
     if not message:
@@ -116,6 +123,7 @@ def log(pixiv_id, message = None):
         debug(message)
         f.write('%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message))
         f.close()
+
 
 # 数据库操作
 class DB:
@@ -153,6 +161,7 @@ class DB:
         except Exception, e:
             log(0, str(e[0]) + ' : ' + e[1])
             return False
+
 
 class ExtendedPixivPy(AppPixivAPI):
     '''扩展ppy'''
@@ -212,6 +221,7 @@ class ExtendedPixivPy(AppPixivAPI):
         ppyName = MODE[rank_name]['ppyName']
         return super(self.__class__, self).illust_ranking(ppyName)
 
+
 def FetchPixiv(aapi, mode):
     # 获取排行
     debug('Get %s ranking page' % mode)
@@ -227,6 +237,7 @@ def FetchPixiv(aapi, mode):
             'id': obj.id,
             'title': obj.title,
             'author': obj.user.name,
+            'uid': obj.user.id,
             'date': obj.create_date,
             'view': obj.total_view,
             'bookmarks': obj.total_bookmarks,
