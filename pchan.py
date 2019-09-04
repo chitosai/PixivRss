@@ -19,12 +19,12 @@ def post_weibo(pixiv_id, image, file_path):
     sina_url = do_post_weibo(weibo_text, file_path)
     # 通过是否获取到了渣浪图片地址来判断是否上传成功
     if not sina_url:
-        log(pixiv_id, 'failed to get image url from sina')
+        log(pixiv_id, 'Failed to get image url from sina')
         return False
     # 成功
     debug('Post success, image url: ' + sina_url)
     # 记录一下
-    write_post_history(pixiv_id)
+    insert_post_weibo_history(pixiv_id)
     # 记录用户上榜
     if weibo_nickname != '':
         award_log(image['uid'])
@@ -77,6 +77,7 @@ def download_medium_image(illust):
 # 根据pixiv_user_id查找微博昵称
 def get_weibo_nickname(pixiv_uid):
     pixiv_uid = str(pixiv_uid)
+    SetLogLevel(+1)
     # 首先从数据库中查找
     r = get_weibo_uid_by_(pixiv_uid)
 
@@ -94,11 +95,15 @@ def get_weibo_nickname(pixiv_uid):
             # 保存
             insert_id_map(pixiv_uid, weibo_uid)
         else:
+            debug('Weibo not found')
             return ''
     # 有
     else:
         weibo_uid = r[0]['weibo_uid']
-
+    
+    
+    debug('Weibo found: %s' % weibo_uid)
+    SetLogLevel(-1)
     # 去weibo查昵称
     weibo_user_page = Get('http://weibo.com/' + weibo_uid)
 
@@ -148,7 +153,7 @@ def check_if_posted(pixiv_id):
 
 
 # 记录微博已发
-def write_post_history(pixiv_id):
+def insert_post_weibo_history(pixiv_id):
     sql = 'INSERT INTO `weibo_post_history` ( `pixiv_id` ) VALUES ( %s )'
     return db.Run(sql, (pixiv_id,))
 
@@ -179,7 +184,7 @@ if __name__ == '__main__':
         post_weibo(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
-            debug('Reached WEIBO_PER_HOUR: %s' % WEIBO_PER_HOUR)
+            debug('Reached WEIBO_PER_HOUR: %s' % WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG)
             break
         # +1s
         time.sleep(1)
