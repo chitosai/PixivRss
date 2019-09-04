@@ -72,11 +72,11 @@ def post(message, filepath):
 
 # 下载中尺寸图
 def download_medium_image(aapi, illust):
-    debug('Download medium size image')
+    debug('  Download medium size image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
     aapi.download(illust['medium'], TEMP_PATH, filename)
-    debug('Download finished, saved to %s' % filepath)
+    debug('  Download finished, saved to %s' % filepath)
     return filepath
 
 # 根据pixiv_user_id查找微博昵称
@@ -165,10 +165,11 @@ if __name__ == '__main__':
     for illust in data:
         pixiv_id = illust['id']
         ranking += 1
+        debug('* Itering no.%s' % ranking)
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
         if r and len(r):
-            debug('%s: Ranking. %s posted, skip' % (count, ranking))
+            debug('  Posted, will skip')
             continue
         # 下载medium尺寸图到本地
         filepath = download_medium_image(aapi, illust)
@@ -177,7 +178,7 @@ if __name__ == '__main__':
         upload(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR:
-            debug('Reached WEIBO_PER_HOUR: %s' % WEIBO_PER_HOUR)
+            debug('  Reached WEIBO_PER_HOUR: %s' % WEIBO_PER_HOUR)
             break
         # +1s
         time.sleep(1)
