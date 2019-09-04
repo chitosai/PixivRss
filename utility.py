@@ -4,8 +4,6 @@ import requests
 from pixivpy3 import *
 from config import *
 
-aapi = AppPixivAPI()
-
 ABS_PATH     = sys.path[0]
 TEMP_PATH    = os.path.join(ABS_PATH, 'temp')
 PREVIEW_PATH = os.path.join(ABS_PATH, 'previews')
@@ -180,22 +178,6 @@ def UpdateExist(mode, exist_list):
     exist_file = open(EXIST_FILE % mode, 'w')
     exist_file.write(exist_json)
     exist_file.close()
-
-def ReadToken():
-    try:
-        f = open(TOKEN_FILE, 'r')
-        tokens = json.load(f)
-    except:
-        f = open(TOKEN_FILE, 'w')
-        tokens = None
-    finally:
-        f.close()
-        return tokens
-
-def SaveToken(token):
-    f = open(TOKEN_FILE, 'w')
-    f.write(json.dumps(token))
-    f.close()
 
 
 # 数据库操作

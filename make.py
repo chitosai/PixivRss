@@ -88,56 +88,70 @@ def GenerateRss(mode, data):
     debug('[Processing] RSS file created')
 
 
-def CheckTokenStatus():
-    tokens = ReadToken()
-    if not tokens:
-        log('Token file empty, getting new token')
-        UpdateToken()
-    else:
-        debug('Token file loaded')
-        aapi.set_auth(tokens['response']['access_token'])
-    try:
-        debug('Verifying token')
-        r = aapi.illust_ranking('day_r18')
-        if 'error' in r:
-            log('Token error? check it, will try to get a new token now')
-            log(json.dumps(r))
-            UpdateToken()
-        else:
-            debug('Token OK')
-    except PixivError as err:
-        if 'Authentication require' in str(err):
-            log('Token expired, getting new token')
-            UpdateToken()
+class ExtendedPixivPy(AppPixivAPI):
+    '''扩展ppy'''
 
-
-__TOKEN_GENERATED = False
-def UpdateToken():
-    global __TOKEN_GENERATED
-    if __TOKEN_GENERATED:
-        log('Already tried to get token once, this method shouldn\'t be called twice!')
-        raise RuntimeError('Already tried to get token once, this method shouldn\'t be called twice!') # end the process
-    else:
-        log('Getting new token')
-        tokens = aapi.login(CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'])
-        aapi.set_auth(tokens.response.access_token)
-        SaveToken(tokens)
-        log('New token saved')
-        __TOKEN_GENERATED = True
-        return tokens
+    # 实例化的时候自动从本地文件读取token
+    def __init__(self):
+        debug('Init ppy class')
+        super(self.__class__, self).__init__()
+        try:
+            f = open(TOKEN_FILE, 'r')
+            tokens = json.load(f)
+            f.close()
+            self.access_token = tokens['access_token']
+            self.refresh_token = tokens['refresh_token']
+            debug('Local token loaded, will verify it')
+        except:
+            debug('Local token empty, try login')
+            self.login(CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'])
+            debug('After login, will verify token')
+        finally:
+            self.verifyToken()
+    
+    # 验证token
+    def verifyToken(self, retry = False):
+        try:
+            r = self.user_detail(100)
+            if 'error' in r:
+                if not retry:
+                    debug('Token expired, try refresh')
+                    self.auth()
+                    debug('Refreshed, will verify it')
+                    self.verifyToken(True)
+                else:
+                    # 已经尝试refresh过一次token，还是报错，可能是有问题
+                    log('Token verify failed again, will exit')
+                    log(json.dumps(r))
+                    raise RuntimeError('Token verify failed again, will exit')
+            else:
+                debug('Token OK')
+                self.saveToken()
+        except PixivError as err:
+            log('Error in login')
+            log(str(err))
+            raise RuntimeError('Error in login')
+    
+    # 保存token
+    def saveToken(self):
+        f = open(TOKEN_FILE, 'w')
+        f.write(json.dumps({
+            'access_token': self.access_token,
+            'refresh_token': self.refresh_token
+        }))
+        f.close()
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        mode = sys.argv[1]
-        global MODE
+    if len(sys.argv) < 1:
+        raise RuntimeError('Specify ranking mode')
+        
+    mode = sys.argv[1]
+    global MODE, aapi
 
-        # 验证分类
-        if mode in MODE:
-            CheckTokenStatus()
-            FetchPixiv(mode)
-        else:
-            print 'Unknown Mode'
-            raise RuntimeError('Unknown Mode')
-    else:
-        print 'No params specified'
+    if mode not in MODE:
+        raise RuntimeError('Unknown Mode')
+    
+    aapi = ExtendedPixivPy()
+    # FetchPixiv(mode)
+        
