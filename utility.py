@@ -247,3 +247,8 @@ class ExtendedPixivPy(AppPixivAPI):
             'refresh_token': self.refresh_token
         }))
         f.close()
+
+    # 不知道为什么ppy用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
+    def illust_ranking(self, rank_name):
+        ppyName = MODE[rank_name]['ppyName']
+        return super(self.__class__, self).illust_ranking(ppyName)

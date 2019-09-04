@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 from utility import *
 
-# 抓pixiv页面
+
 def FetchPixiv(mode):
-    global MODE
-
-    # 不知道为什么pixivpy的ranking关键字和p站本身不一样，转换一下
-    ppyName = MODE[mode]['ppyName']
-
-    # 获取排行
     aapi = ExtendedPixivPy()
-    debug('[Processing] get ranking page')
-    r = aapi.illust_ranking(ppyName)
+    # 获取排行
+    debug('[Processing] get %s ranking page' % mode)
+    r = aapi.illust_ranking(mode)
     if 'error' in r:
         log('Failed to get %s ranking list, will exit' % mode)
         log(json.dumps(r))
@@ -34,7 +29,6 @@ def FetchPixiv(mode):
     GenerateRss(mode, data)
 
 
-# 输出rss文件
 def GenerateRss(mode, data):
     debug('[Processing] generating rss')
     global CONFIG, RSS_PATH, MODE
