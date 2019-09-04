@@ -10,7 +10,6 @@ def post_weibo(pixiv_id, image, file_path):
     weibo_nickname = get_weibo_nickname(image['uid'])
 
     # 排行发微博
-    SetLogLevel(+1)
     debug('Posting weibo')
     weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
                     % (image['ranking'], image['author'], image['title'], \
@@ -18,17 +17,17 @@ def post_weibo(pixiv_id, image, file_path):
                      weibo_nickname)
 
     sina_url = do_post_weibo(weibo_text, file_path)
-    # 渣浪图片地址
+    # 通过是否获取到了渣浪图片地址来判断是否上传成功
     if not sina_url:
         log(pixiv_id, 'failed to get image url from sina')
         return False
-    debug('Post success, image url:' + sina_url)
-
+    # 成功
+    debug('Post success, image url: ' + sina_url)
+    # 记录一下
+    write_post_history(pixiv_id)
     # 记录用户上榜
     if weibo_nickname != '':
         award_log(image['uid'])
-        
-    return sina_url
 
 
 def do_post_weibo(message, filepath):
@@ -47,18 +46,17 @@ def do_post_weibo(message, filepath):
         }
         res = requests.post('https://api.weibo.com/2/statuses/share.json', data = data, files = files)
         if res.status_code != 200:
-            log('-1', 'weibo responsed with code != 200, code: %s' % res.status_code)
+            log('Weibo responsed with code != 200, code: %s' % res.status_code)
             if '20053' in res.text:
                 # {"error":"Your Weibo has been successfully released and needs manual review for 3 minutes. Please be patient.\nIf you have any questions, please contact the exclusive customer service, or call 4000960960, more help please enter the customer service center.","error_code":20053,"request":"/2/statuses/share.json"}
-                # 微博新增了这样一种情况，本身是作为失败返回的，并且也确实拿不到大图地址，但是微博却成功发出去了
-                # 所以这里返回个特殊字符串，通知最外层的make直接放原始小图url
-                r = WEIBO_MANUAL_REVIEW
+                # 微博新增了这样一种情况，本身是作为失败返回的，并且也确实拿不到大图地址，但是微博却成功发出去了，所以也算是成功吧
+                r = 'WEIBO_MANUAL_REVIEW'
             else:
                 log(filepath, res.text)
         else:
             r = res.json()['original_pic']
     except Exception, err:
-        log('-1', 'weibo responsed error')
+        log('Weibo post failed')
         log(filepath, err)
     finally:
         f.close()
@@ -86,7 +84,7 @@ def get_weibo_nickname(pixiv_uid):
     if not len(r):
         user_profile = aapi.user_detail(pixiv_uid)
         if not user_profile or 'error' in user_profile:
-            debug('Failed to get pixiv user profile')
+            log('Failed to get pixiv user profile')
             return ''
         # 从签名里匹配
         signature = user_profile.user.comment
@@ -96,7 +94,6 @@ def get_weibo_nickname(pixiv_uid):
             # 保存
             insert_id_map(pixiv_uid, weibo_uid)
         else:
-            debug('No WEIBO_URL')
             return ''
     # 有
     else:
@@ -149,6 +146,11 @@ def check_if_posted(pixiv_id):
     sql = 'SELECT `pixiv_id` FROM `pixiv_post_history` WHERE `pixiv_id` = %s'
     return db.Query(sql, (pixiv_id,))
 
+
+# 记录微博已发
+def write_post_history(pixiv_id):
+    sql = 'INSERT INTO `weibo_post_history` ( `pixiv_id` ) VALUES ( %s )'
+    return db.Run(sql, (pixiv_id,))
 
 if __name__ == '__main__':
     global aapi
