@@ -166,6 +166,7 @@ if __name__ == '__main__':
         pixiv_id = illust['id']
         ranking += 1
         debug('* Itering no.%s' % ranking)
+        SetLogLevel(1)
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
         if r and len(r):
@@ -182,4 +183,5 @@ if __name__ == '__main__':
             break
         # +1s
         time.sleep(1)
+    SetLogLevel(0)
     debug('All job done, processed %s item(s)' % count)

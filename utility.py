@@ -103,12 +103,16 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
         log(url, err)
         return False
 
+__LOG_LEVEL = 0
+def SetLogLevel(level):
+    global __LOG_LEVEL
+    __LOG_LEVEL = level
 
 # DEBUG
 def debug(message):
     global DEBUG
     if DEBUG:
-        print message
+        print __LOG_LEVEL * '  ' + message
 
 
 def log(pixiv_id, message = None):
