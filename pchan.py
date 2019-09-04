@@ -131,7 +131,7 @@ def get_weibo_nickname(pixiv_uid):
 # 根据pixiv_user_id从数据库查找微博昵称
 def get_weibo_uid_by_(pixiv_uid):
     sql = 'SELECT `weibo_uid` FROM `pixiv_weibo_id_map` WHERE `pixiv_uid` = %s'
-    return db.Query(sql, (pixiv_id))
+    return db.Query(sql, (pixiv_id,))
 
 # 插入pixiv_user_id到weibo_user_id的映射
 def insert_id_map(pixiv_uid, weibo_uid):
@@ -150,7 +150,7 @@ def check_if_posted(pixiv_id):
     if DEBUG:
         return False
     sql = 'SELECT `pixiv_id` FROM `pixiv_post_history` WHERE `pixiv_id` = %s'
-    return db.Query(sql, (pixiv_id))
+    return db.Query(sql, (pixiv_id,))
 
 
 if __name__ == '__main__':
