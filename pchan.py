@@ -18,10 +18,6 @@ def upload(pixiv_id, image, file_path, mode, title, count):
                      'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + pixiv_id,
                      weibo_nickname)
 
-    # 补充动态图说明
-    if image['isAnimated']:
-        weibo_text += u' [原图为动图]'
-
     sina_url = post(mode, weibo_text, file_path)
 
     # 渣浪图片地址

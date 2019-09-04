@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
-import re, platform, os, sys, time, datetime, json, logging
+import re, os, sys, time, datetime, json, logging
 import requests
 from pixivpy3 import *
 from config import *
 
 ABS_PATH     = sys.path[0]
 TEMP_PATH    = os.path.join(ABS_PATH, 'temp')
-PREVIEW_PATH = os.path.join(ABS_PATH, 'previews')
 RSS_PATH     = os.path.join(ABS_PATH, 'rss')
 LOG_PATH     = os.path.join(ABS_PATH, 'log')
 
-COOKIE_FILE  = os.path.join(ABS_PATH, 'pixiv.cookie.txt')
 TOKEN_FILE   = os.path.join(ABS_PATH, 'pixiv.token.txt')
-EXIST_FILE   = os.path.join(ABS_PATH, 'exist', '%s.json')
 
 MODE = {
     'daily'     : { 'title': u'每日',       'ppyName': 'day' },
@@ -144,8 +141,8 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
 # DEBUG
 def debug(message):
     global DEBUG
-    if not DEBUG : return
-    print message
+    if DEBUG:
+        print message
 
 def log(pixiv_id, message = None):
     if not message:
@@ -159,26 +156,6 @@ def log(pixiv_id, message = None):
         debug(message)
         f.write('%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message))
         f.close()
-
-# 读取exist.json
-def ReadExist(mode):
-    try:
-        exist_file = open(EXIST_FILE % mode, 'r')
-        exist_list = json.load(exist_file)
-    except:
-        exist_file = open(EXIST_FILE % mode, 'w')
-        exist_list = {}
-    finally:
-        exist_file.close()
-        return exist_list
-
-# 更新exist.json
-def UpdateExist(mode, exist_list):
-    exist_json = json.dumps(exist_list)
-    exist_file = open(EXIST_FILE % mode, 'w')
-    exist_file.write(exist_json)
-    exist_file.close()
-
 
 # 数据库操作
 class DB:
@@ -217,3 +194,56 @@ class DB:
         except Exception, e:
             log(0,  str(e[0]) + ' : ' + e[1])
             return False
+
+class ExtendedPixivPy(AppPixivAPI):
+    '''扩展ppy'''
+
+    # 实例化的时候自动从本地文件读取token
+    def __init__(self):
+        debug('Init ppy class')
+        super(self.__class__, self).__init__()
+        try:
+            f = open(TOKEN_FILE, 'r')
+            tokens = json.load(f)
+            f.close()
+            self.access_token = tokens['access_token']
+            self.refresh_token = tokens['refresh_token']
+            debug('Local token loaded, will verify it')
+        except:
+            debug('Local token empty, try login')
+            self.login(CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'])
+            debug('After login, will verify token')
+        finally:
+            self.verifyToken()
+    
+    # 验证token
+    def verifyToken(self, retry = False):
+        try:
+            r = self.user_detail(100)
+            if 'error' in r:
+                if not retry:
+                    debug('Token expired, try refresh')
+                    self.auth()
+                    debug('Refreshed, will verify it')
+                    self.verifyToken(True)
+                else:
+                    # 已经尝试refresh过一次token，还是报错，可能是有问题
+                    log('Token verify failed again, will exit')
+                    log(json.dumps(r))
+                    raise RuntimeError('Token verify failed again, will exit')
+            else:
+                debug('Token OK')
+                self.saveToken()
+        except PixivError as err:
+            log('Error in login')
+            log(str(err))
+            raise RuntimeError('Error in login')
+    
+    # 保存token
+    def saveToken(self):
+        f = open(TOKEN_FILE, 'w')
+        f.write(json.dumps({
+            'access_token': self.access_token,
+            'refresh_token': self.refresh_token
+        }))
+        f.close()

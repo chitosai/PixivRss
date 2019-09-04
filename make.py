@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-
 from utility import *
-import pchan
 
 # 抓pixiv页面
 def FetchPixiv(mode):
-    debug('[Processing] get ranking page')
-    global DEBUG, TEMP_PATH, MODE
+    global MODE
 
     # 不知道为什么pixivpy的ranking关键字和p站本身不一样，转换一下
     ppyName = MODE[mode]['ppyName']
 
     # 获取排行
+    aapi = ExtendedPixivPy()
+    debug('[Processing] get ranking page')
     r = aapi.illust_ranking(ppyName)
     if 'error' in r:
         log('Failed to get %s ranking list, will exit' % mode)
@@ -86,70 +85,15 @@ def GenerateRss(mode, data):
     debug('[Processing] RSS file created')
 
 
-class ExtendedPixivPy(AppPixivAPI):
-    '''扩展ppy'''
-
-    # 实例化的时候自动从本地文件读取token
-    def __init__(self):
-        debug('Init ppy class')
-        super(self.__class__, self).__init__()
-        try:
-            f = open(TOKEN_FILE, 'r')
-            tokens = json.load(f)
-            f.close()
-            self.access_token = tokens['access_token']
-            self.refresh_token = tokens['refresh_token']
-            debug('Local token loaded, will verify it')
-        except:
-            debug('Local token empty, try login')
-            self.login(CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'])
-            debug('After login, will verify token')
-        finally:
-            self.verifyToken()
-    
-    # 验证token
-    def verifyToken(self, retry = False):
-        try:
-            r = self.user_detail(100)
-            if 'error' in r:
-                if not retry:
-                    debug('Token expired, try refresh')
-                    self.auth()
-                    debug('Refreshed, will verify it')
-                    self.verifyToken(True)
-                else:
-                    # 已经尝试refresh过一次token，还是报错，可能是有问题
-                    log('Token verify failed again, will exit')
-                    log(json.dumps(r))
-                    raise RuntimeError('Token verify failed again, will exit')
-            else:
-                debug('Token OK')
-                self.saveToken()
-        except PixivError as err:
-            log('Error in login')
-            log(str(err))
-            raise RuntimeError('Error in login')
-    
-    # 保存token
-    def saveToken(self):
-        f = open(TOKEN_FILE, 'w')
-        f.write(json.dumps({
-            'access_token': self.access_token,
-            'refresh_token': self.refresh_token
-        }))
-        f.close()
-
-
 if __name__ == '__main__':
     if len(sys.argv) < 1:
-        raise RuntimeError('Specify ranking mode')
+        raise RuntimeError('Specify ranking name')
         
     mode = sys.argv[1]
-    global MODE, aapi
+    global MODE
 
     if mode not in MODE:
-        raise RuntimeError('Unknown Mode')
+        raise RuntimeError('Unknown ranking name')
     
-    aapi = ExtendedPixivPy()
     FetchPixiv(mode)
         
