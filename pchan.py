@@ -184,7 +184,7 @@ if __name__ == '__main__':
         post_weibo(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
-            debug('Reached WEIBO_PER_HOUR: %s' % WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG)
+            debug('Reached WEIBO_PER_HOUR: %s' % (WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG))
             break
         # +1s
         time.sleep(1)
