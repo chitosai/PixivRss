@@ -71,7 +71,7 @@ def download_medium_image(illust):
     debug('Download medium size image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
-    aapi.download(illust['medium'], TEMP_PATH, filename)
+    aapi.download(illust['medium'], path = TEMP_PATH, name = filename)
     debug('Download finished, saved to %s' % filepath)
     return filepath
 
