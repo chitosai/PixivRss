@@ -40,7 +40,7 @@ def do_post_weibo(message, filepath):
         data = {
             'status': message,
             'rip': '61.133.235.27', # 发微博接口更新后要传发微博者的真实ip，搞个青海的ip凑凑数
-            'access_token': WEIBO['ACCESS_TOKEN']
+            'access_token': WEIBO['prod']['ACCESS_TOKEN'] if not DEBUG else WEIBO['test']['ACCESS_TOKEN']
         }
         files = {
             'pic': f
