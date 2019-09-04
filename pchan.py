@@ -75,7 +75,7 @@ def download_medium_image(aapi, illust):
     debug('Download medium size image')
     filename = '%s.jpg' % illust.id
     filepath = os.path.join(TEMP_PATH, filename)
-    aapi.download(illust.medium, TEMP_PATH, filename)
+    aapi.download(illust['medium'], TEMP_PATH, filename)
     debug('Download finished, saved to %s' % filepath)
     return filepath
 
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     ranking = 0 # 当前这幅图是日榜第几位，好像暂时也只能靠自己这样算
     debug('Begin to iter daily ranking list')
     for illust in data:
-        pixiv_id = illust.id
+        pixiv_id = illust['id']
         ranking += 1
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         # 下载medium尺寸图到本地
         filepath = download_medium_image(aapi, illust)
         # 上传
-        illust.ranking = ranking
+        illust['ranking'] = ranking
         upload(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR:
