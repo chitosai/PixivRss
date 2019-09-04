@@ -3,8 +3,6 @@
 from utility import *
 import pchan
 
-MAX_WEIBO_PER_HOUR = 6
-
 # 抓pixiv页面
 def FetchPixiv(mode):
     debug('[Processing] get ranking page')
