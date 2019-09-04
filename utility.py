@@ -4,6 +4,7 @@ import requests
 from pixivpy3 import *
 from config import *
 
+
 if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     import httplib as http_client
     http_client.HTTPConnection.debuglevel = 1
@@ -13,14 +14,17 @@ if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
+
 def FormatTime(time_original, format_new = '%a, %d %b %Y %H:%M:%S +9000'):
     date = datetime.datetime.strptime(time_original, '%Y-%m-%dT%H:%M:%S+09:00')
     return date.strftime(format_new)
 
+
 def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
 
-def Get(url, refer = 'http://www.pixiv.net/'):
+
+def Get(url):
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8',
@@ -28,46 +32,27 @@ def Get(url, refer = 'http://www.pixiv.net/'):
         'Accept-Encoding': 'gzip, deflate, sdch',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36'
     }
-
-    if refer != '':
-        headers['Referer'] = refer
-
-    proxies = {}
-
-    # pixiv登录状态
-    if 'pixiv.net' in url or 'pximg.net' in url:
-        cookie_file = open(COOKIE_FILE, 'r')
-        cookies = json.load(cookie_file)
-        cookie_file.close()
-        cookies['p_ab_id'] = '1'
-
-        # apply proxy for pixiv
-        if 'proxy' in CONFIG:
-            proxies = CONFIG['proxy']
-
     # 防止海外访问weibo变英文版
-    elif 'weibo.com' in url:
-        cookies = {
-            'lang': 'zh-cn',
-            'SUB': 'Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D',
-            'UV5PAGE': 'usr512_114',
-            'UV5': 'usrmdins311164'
-        }
-
+    cookies = {
+        'lang': 'zh-cn',
+        'SUB': 'Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D',
+        'UV5PAGE': 'usr512_114',
+        'UV5': 'usrmdins311164'
+    }
     debug('[Network] new http request: get ' + url)
     try:
-        r = requests.get(url, headers = headers, cookies = cookies, proxies = proxies, timeout = TIMEOUT)
+        r = requests.get(url, headers = headers, cookies = cookies, timeout = 6)
         debug('[Network] response status code: %s' % r.status_code)
     except Exception, e:
-        log(-1, 'unable to get %s, error message:' % url)
-        log(-1, e)
+        log('unable to get %s, error message:' % url)
+        log(e)
         return False
-
     # 判断返回内容是不是纯文本
     if 'text/html' in r.headers['Content-Type']:
         return r.text
     else:
         return r.content
+
 
 # 输出文件
 def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
@@ -98,11 +83,17 @@ def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
         log(url, err)
         return False
 
+__LOG_LEVEL = 0
+def SetLogLevel(delta):
+    global __LOG_LEVEL
+    __LOG_LEVEL += delta
+
 # DEBUG
 def debug(message):
     global DEBUG
     if DEBUG:
-        print message
+        print __LOG_LEVEL * '  ' + message
+
 
 def log(pixiv_id, message = None):
     if not message:
@@ -116,6 +107,7 @@ def log(pixiv_id, message = None):
         debug(message)
         f.write('%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message))
         f.close()
+
 
 # 数据库操作
 class DB:
@@ -142,7 +134,8 @@ class DB:
                 self.c.execute(sql)
             return self.c.fetchall()
         except Exception, e:
-            log(0, str(e[0]) + ' : ' + e[1])
+            log('Error in DB Query')
+            log(str(e))
             return False
 
     # 执行
@@ -151,8 +144,10 @@ class DB:
             self.c.execute(sql, data)
             return self._.insert_id()
         except Exception, e:
-            log(0, str(e[0]) + ' : ' + e[1])
+            log('Error in DB execute')
+            log(str(e))
             return False
+
 
 class ExtendedPixivPy(AppPixivAPI):
     '''扩展ppy'''
@@ -212,6 +207,7 @@ class ExtendedPixivPy(AppPixivAPI):
         ppyName = MODE[rank_name]['ppyName']
         return super(self.__class__, self).illust_ranking(ppyName)
 
+
 def FetchPixiv(aapi, mode):
     # 获取排行
     debug('Get %s ranking page' % mode)
@@ -227,6 +223,7 @@ def FetchPixiv(aapi, mode):
             'id': obj.id,
             'title': obj.title,
             'author': obj.user.name,
+            'uid': obj.user.id,
             'date': obj.create_date,
             'view': obj.total_view,
             'bookmarks': obj.total_bookmarks,
