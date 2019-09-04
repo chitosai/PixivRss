@@ -150,7 +150,7 @@ class DB:
                 self.c.execute(sql)
             return self.c.fetchall()
         except Exception, e:
-            log(0, str(e[0]) + ' : ' + e[1])
+            log(0, str(e))
             return False
 
     # 执行
