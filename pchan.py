@@ -71,7 +71,7 @@ def post(message, filepath):
         return r
 
 # 下载中尺寸图
-def download_medium_image(aapi, illust):
+def download_medium_image(illust):
     debug('Download medium size image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
@@ -87,23 +87,20 @@ def get_weibo_nickname(pixiv_uid):
 
     # 没有
     if not len(r):
-        pixiv_user_page = Get('http://www.pixiv.net/member.php?id=' + pixiv_uid)
-
-        if not pixiv_user_page:
-            debug('Error: failed to open pixiv member profile page')
+        user_profile = aapi.user_detail(pixiv_uid)
+        if not user_profile or 'error' in user_profile:
+            debug('Failed to get pixiv user profile')
             return ''
-
-        # 先剔除掉pixiv自己的weibo链接
-        pixiv_user_page = pixiv_user_page.replace('http://weibo.com/2230227495', '')
-        # download('a.html', 'http://www.pixiv.net/member.php?id=' + pixiv_uid)
-        # 直接从整个网页代码里匹配
-        m = re.search('http://(?:www\.)?weibo\.com/(.+?)<', pixiv_user_page, re.S)
+        # 从签名里匹配
+        signature = user_profile.user.comment
+        print signature
+        m = re.search('http://(?:www\.)?weibo\.com/(.+?)[\r\n\s]', signature, re.S)
         if m:
             weibo_uid = m.group(1)
             # 保存
             insert_id_map(pixiv_uid, weibo_uid)
         else:
-            debug('Processing: no WEIBO_URL')
+            debug('No WEIBO_URL')
             return ''
     # 有
     else:
@@ -114,7 +111,7 @@ def get_weibo_nickname(pixiv_uid):
 
     if not weibo_user_page:
         log(pixiv_uid, 'Error: failed to open weibo profile page')
-        return '';
+        return ''
 
     m = re.search(u'Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
     if m:
@@ -125,7 +122,7 @@ def get_weibo_nickname(pixiv_uid):
         if m:
             return u' @%s' % m.group(1)
         else:
-            log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + 'http://weibo.com/' + weibo_uid)
+            log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + weibo_uid)
             return ''
 
 # 根据pixiv_user_id从数据库查找微博昵称
@@ -154,6 +151,7 @@ def check_if_posted(pixiv_id):
 
 
 if __name__ == '__main__':
+    global aapi
     # 现在只有daily一个微博了，就不要多余的判断了
     aapi = ExtendedPixivPy()
     data = FetchPixiv(aapi, 'daily')
@@ -173,7 +171,7 @@ if __name__ == '__main__':
             debug('Posted, will skip')
             continue
         # 下载medium尺寸图到本地
-        filepath = download_medium_image(aapi, illust)
+        filepath = download_medium_image(illust)
         # 上传
         illust['ranking'] = ranking
         upload(pixiv_id, illust, filepath)

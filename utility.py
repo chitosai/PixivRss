@@ -24,7 +24,7 @@ def GetCurrentTime():
     return time.strftime('%a, %d %b %Y %H:%M:%S +8000', time.localtime(time.time()))
 
 
-def Get(url, refer = 'http://www.pixiv.net/'):
+def Get(url):
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8',
@@ -32,41 +32,21 @@ def Get(url, refer = 'http://www.pixiv.net/'):
         'Accept-Encoding': 'gzip, deflate, sdch',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36'
     }
-
-    if refer != '':
-        headers['Referer'] = refer
-
-    proxies = {}
-
-    # pixiv登录状态
-    if 'pixiv.net' in url or 'pximg.net' in url:
-        cookie_file = open(COOKIE_FILE, 'r')
-        cookies = json.load(cookie_file)
-        cookie_file.close()
-        cookies['p_ab_id'] = '1'
-
-        # apply proxy for pixiv
-        if 'proxy' in CONFIG:
-            proxies = CONFIG['proxy']
-
     # 防止海外访问weibo变英文版
-    elif 'weibo.com' in url:
-        cookies = {
-            'lang': 'zh-cn',
-            'SUB': 'Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D',
-            'UV5PAGE': 'usr512_114',
-            'UV5': 'usrmdins311164'
-        }
-
+    cookies = {
+        'lang': 'zh-cn',
+        'SUB': 'Af3TZPWScES9bnItTjr2Ahd5zd6Niw2rzxab0hB4mX3uLwL2MikEk1FZIrAi5RvgAfCWhPyBL4jbuHRggucLT4hUQowTTAZ0ta7TYSBaNttSmZr6c7UIFYgtxRirRyJ6Ww%3D%3D',
+        'UV5PAGE': 'usr512_114',
+        'UV5': 'usrmdins311164'
+    }
     debug('[Network] new http request: get ' + url)
     try:
-        r = requests.get(url, headers = headers, cookies = cookies, proxies = proxies, timeout = TIMEOUT)
+        r = requests.get(url, headers = headers, cookies = cookies, timeout = 6)
         debug('[Network] response status code: %s' % r.status_code)
     except Exception, e:
-        log(-1, 'unable to get %s, error message:' % url)
-        log(-1, e)
+        log('unable to get %s, error message:' % url)
+        log(e)
         return False
-
     # 判断返回内容是不是纯文本
     if 'text/html' in r.headers['Content-Type']:
         return r.text
