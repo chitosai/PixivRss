@@ -150,7 +150,8 @@ class DB:
                 self.c.execute(sql)
             return self.c.fetchall()
         except Exception, e:
-            log(0, str(e))
+            log('Error in DB Query')
+            log(str(e))
             return False
 
     # 执行
@@ -159,7 +160,8 @@ class DB:
             self.c.execute(sql, data)
             return self._.insert_id()
         except Exception, e:
-            log(0, str(e[0]) + ' : ' + e[1])
+            log('Error in DB execute')
+            log(str(e))
             return False
 
 
