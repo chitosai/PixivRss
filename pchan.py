@@ -163,12 +163,10 @@ if __name__ == '__main__':
 
     # 开始遍历
     count   = 0 # 遍历了几次，用这个变量来确保每小时不会发布超过WEIBO_PER_HOUR
-    ranking = 0 # 当前这幅图是日榜第几位，好像暂时也只能靠自己这样算
     debug('Begin to iter daily ranking list')
     for illust in data:
         pixiv_id = illust['id']
-        ranking += 1
-        debug('* Itering no.%s' % ranking)
+        debug('* Itering no.%s' % illust['ranking'])
         SetLogLevel(+2)
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
@@ -178,7 +176,6 @@ if __name__ == '__main__':
         # 下载medium尺寸图到本地
         filepath = download_medium_image(illust)
         # 上传
-        illust['ranking'] = ranking
         post_weibo(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):

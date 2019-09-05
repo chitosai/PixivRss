@@ -189,7 +189,11 @@ def FetchPixiv(aapi, mode):
         raise RuntimeError()
 
     # 筛选出我们需要的数据
+    tmp = {
+        'ranking': 0 # 这个ranking直接作为int传入filter会造成无法修改，所以稿一个dict，用修改attr的方式实现
+    }
     def filter(obj):
+        tmp['ranking'] += 1
         return {
             'id': obj.id,
             'title': obj.title,
@@ -199,7 +203,8 @@ def FetchPixiv(aapi, mode):
             'view': obj.total_view,
             'bookmarks': obj.total_bookmarks,
             'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id,
-            'medium': obj.image_urls.medium
+            'medium': obj.image_urls.medium,
+            'ranking': tmp['ranking'] # 这幅图在榜上排第几，好像暂时只能靠这样自己加
         }
     data = map(filter, r.illusts)
     return data
