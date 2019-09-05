@@ -64,12 +64,12 @@ def do_post_weibo(message, filepath):
         return r
 
 
-# 下载large图
+# 下载原图
 def download_image(illust):
     debug('Download image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
-    aapi.download(illust['images']['large'], path = TEMP_PATH, name = filename)
+    aapi.download(illust['images']['original'], path = TEMP_PATH, name = filename)
     debug('Download finished, saved to %s' % filepath)
     return filepath
 

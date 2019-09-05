@@ -206,7 +206,8 @@ def FetchPixiv(aapi, mode):
             'ranking': tmp['ranking'], # 这幅图在榜上排第几，好像暂时只能靠这样自己加
             'images': {
                 'medium': obj.image_urls.medium,
-                'large': obj.image_urls.large
+                'large': obj.image_urls.large,
+                'original': obj.meta_single_page.original_image_url if hasattr(obj.meta_single_page, 'original_image_url') else obj.meta_pages[0].image_urls.original
             }
         }
     data = map(filter, r.illusts)
