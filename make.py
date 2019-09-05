@@ -23,7 +23,7 @@ def GenerateRss(mode, data):
         for i in range(real_total):
             image = data[i]
 
-            desc  = u'第 %s 名' % image['ranking']
+            desc  = u'<p>第 %s 位</p>' % image['ranking']
             desc += u'<p>画师：' + image['author']
             desc += u' - 上传于：' + FormatTime(image['date'], '%Y-%m-%d %H:%M:%S')
             desc += u' - 阅览数：' + str(image['view'])
