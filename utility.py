@@ -54,35 +54,6 @@ def Get(url):
         return r.content
 
 
-# 输出文件
-def download(fname, url, refer = 'http://www.pixiv.net/ranking.php'):
-    # 检查文件是否存在
-    if os.path.exists(fname):
-        # 检查是否为空
-        if os.path.getsize(fname) != 0:
-            # 不为空说明已存在，返回True
-            return True
-        else:
-            # 为空说明文件有问题，需要重新下载
-            os.remove(fname)
-
-    # 下载
-    data = Get(url, refer = refer)
-
-    # 检查
-    if not data:
-        return False
-
-    # 写入
-    try:
-        f = open(fname, 'wb')
-        f.write(data)
-        f.close()
-        return True
-    except Exception, err:
-        log(url, err)
-        return False
-
 __LOG_LEVEL = 0
 def SetLogLevel(delta):
     global __LOG_LEVEL
