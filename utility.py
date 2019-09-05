@@ -203,8 +203,11 @@ def FetchPixiv(aapi, mode):
             'view': obj.total_view,
             'bookmarks': obj.total_bookmarks,
             'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id,
-            'medium': obj.image_urls.medium,
-            'ranking': tmp['ranking'] # 这幅图在榜上排第几，好像暂时只能靠这样自己加
+            'ranking': tmp['ranking'], # 这幅图在榜上排第几，好像暂时只能靠这样自己加
+            'images': {
+                'medium': obj.image_urls.medium,
+                'large': obj.image_urls.large
+            }
         }
     data = map(filter, r.illusts)
     return data

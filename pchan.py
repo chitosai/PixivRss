@@ -64,12 +64,12 @@ def do_post_weibo(message, filepath):
         return r
 
 
-# 下载中尺寸图
-def download_medium_image(illust):
-    debug('Download medium size image')
+# 下载large图
+def download_image(illust):
+    debug('Download image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
-    aapi.download(illust['medium'], path = TEMP_PATH, name = filename)
+    aapi.download(illust['images']['large'], path = TEMP_PATH, name = filename)
     debug('Download finished, saved to %s' % filepath)
     return filepath
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
             debug('Posted, will skip')
             continue
         # 下载medium尺寸图到本地
-        filepath = download_medium_image(illust)
+        filepath = download_image(illust)
         # 上传
         post_weibo(pixiv_id, illust, filepath)
         count += 1
