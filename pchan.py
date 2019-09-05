@@ -164,10 +164,10 @@ if __name__ == '__main__':
     # 开始遍历
     count   = 0 # 遍历了几次，用这个变量来确保每小时不会发布超过WEIBO_PER_HOUR
     debug('Begin to iter daily ranking list')
+    SetLogLevel(+2)
     for illust in data:
         pixiv_id = illust['id']
         debug('* Itering no.%s' % illust['ranking'])
-        SetLogLevel(+2)
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
         if r and len(r):
