@@ -86,6 +86,7 @@ def get_weibo_nickname(pixiv_uid):
         user_profile = aapi.user_detail(pixiv_uid)
         if not user_profile or 'error' in user_profile:
             log('Failed to get pixiv user profile')
+            SetLogLevel(-1)
             return ''
         # 从签名里匹配
         signature = user_profile.user.comment
@@ -96,6 +97,7 @@ def get_weibo_nickname(pixiv_uid):
             insert_id_map(pixiv_uid, weibo_uid)
         else:
             debug('Weibo not found')
+            SetLogLevel(-1)
             return ''
     # 有
     else:
@@ -164,10 +166,10 @@ if __name__ == '__main__':
     # 开始遍历
     count   = 0 # 遍历了几次，用这个变量来确保每小时不会发布超过WEIBO_PER_HOUR
     debug('Begin to iter daily ranking list')
-    SetLogLevel(+2)
     for illust in data:
         pixiv_id = illust['id']
         debug('* Itering no.%s' % illust['ranking'])
+        SetLogLevel(+2)
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
         if r and len(r):
@@ -181,7 +183,7 @@ if __name__ == '__main__':
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
             debug('Reached WEIBO_PER_HOUR: %s' % (WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG))
             break
+        SetLogLevel(-2)
         # +1s
         time.sleep(1)
-    SetLogLevel(-2)
     debug('All job done, processed %s item(s)' % count)
