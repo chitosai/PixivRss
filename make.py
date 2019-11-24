@@ -9,7 +9,8 @@ def GenerateRss(mode, data):
 
     for total in CONFIG['totals']:
 
-        RSS = u'''<rss version="2.0" encoding="utf-8">
+        RSS = u'''<?xml version="1.0" encoding="utf-8" ?>
+        <rss version="2.0">
         <channel><title>Pixiv%s排行 - 前%s</title>
     　　<link>http://rakuen.thec.me/PixivRss/</link>
     　　<description>就算是排行也要订阅啊混蛋！</description>
@@ -22,6 +23,7 @@ def GenerateRss(mode, data):
         real_total = min(total, len(data))
         for i in range(real_total):
             image = data[i]
+            image_link = 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + str(image['id'])
 
             desc  = u'<p>第 %s 位</p>' % image['ranking']
             desc += u'<p>画师：' + image['author']
@@ -33,12 +35,14 @@ def GenerateRss(mode, data):
 
             RSS += u'''<item>
                     <title><![CDATA[%s]]></title>
+                    <guid>%s</guid>
                     <link>%s</link>
                     <description><![CDATA[%s]]></description>
                     <pubDate>%s</pubDate>
                 </item>''' % (
-                                image['title'], 
-                                'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + str(image['id']), 
+                                image['title'],
+                                image_link,
+                                image_link,
                                 desc,
                                 FormatTime(image['date'])
                             )
