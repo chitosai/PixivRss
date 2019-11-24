@@ -9,8 +9,7 @@ def GenerateRss(mode, data):
 
     for total in CONFIG['totals']:
 
-        RSS = u'''<?xml version="1.0" encoding="utf-8" ?>
-        <rss version="2.0">
+        RSS = u'''<rss version="2.0">
         <channel><title>Pixiv%s排行 - 前%s</title>
     　　<link>http://rakuen.thec.me/PixivRss/</link>
     　　<description>就算是排行也要订阅啊混蛋！</description>
