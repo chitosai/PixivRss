@@ -31,9 +31,6 @@ def post_weibo(pixiv_id, image, file_path):
 
 
 def do_post_weibo(message, filepath):
-    # debug模式时不要真发微博出去啊
-    if DEBUG:
-        return 'True'
     # 准备返回值，默认为False，上传完毕修改为图片url
     r = False
     # upload
