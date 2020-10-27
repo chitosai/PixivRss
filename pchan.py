@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from utility import *
+from make import FetchPixiv
 
 db = DB()
-
 
 def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
@@ -31,6 +31,9 @@ def post_weibo(pixiv_id, image, file_path):
 
 
 def do_post_weibo(message, filepath):
+    # debug模式时不要真发微博出去啊
+    if DEBUG:
+        return 'True'
     # 准备返回值，默认为False，上传完毕修改为图片url
     r = False
     # upload
@@ -55,7 +58,7 @@ def do_post_weibo(message, filepath):
                 log(filepath, res.text)
         else:
             r = res.json()['original_pic']
-    except Exception, err:
+    except Exception as err:
         log('Weibo post failed')
         log(filepath, err)
     finally:
@@ -69,7 +72,13 @@ def download_image(illust):
     debug('Download image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
-    aapi.download(illust['images']['original'], path = TEMP_PATH, name = filename)
+    # 突然开始出现original字段为空的情况，总之处理一下吧 id=85217944
+    picpath = illust['images']['original'] or illust['images']['large'] or illust['images']['medium']
+    if not picpath:
+        log('Image url not found!')
+        log(json.dumps(illust))
+        raise RuntimeError()
+    aapi.download(picpath, path = TEMP_PATH, name = filename)
     debug('Download finished, saved to %s' % filepath)
     return filepath
 
@@ -174,6 +183,7 @@ if __name__ == '__main__':
         r = check_if_posted(pixiv_id)
         if r and len(r):
             debug('Posted, will skip')
+            SetLogLevel(-2)
             continue
         # 下载medium尺寸图到本地
         filepath = download_image(illust)
@@ -181,6 +191,7 @@ if __name__ == '__main__':
         post_weibo(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
+            SetLogLevel(-2)
             debug('Reached WEIBO_PER_HOUR: %s' % (WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG))
             break
         SetLogLevel(-2)

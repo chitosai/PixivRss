@@ -1,5 +1,5 @@
 /cache/
-/*.pyc
+*.pyc
 /pixiv.cookie.txt
 /config.py
 /test.py

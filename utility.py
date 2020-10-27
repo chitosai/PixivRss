@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re, time, datetime, json, logging, MySQLdb
+import re, time, datetime, json, logging, pymysql
 import requests
 from pixivpy3 import *
 from config import *
@@ -43,7 +43,7 @@ def Get(url):
     try:
         r = requests.get(url, headers = headers, cookies = cookies, timeout = 6)
         debug('[Network] response status code: %s' % r.status_code)
-    except Exception, e:
+    except Exception as e:
         log('unable to get %s, error message:' % url)
         log(e)
         return False
@@ -63,7 +63,7 @@ def SetLogLevel(delta):
 def debug(message):
     global DEBUG
     if DEBUG:
-        print __LOG_LEVEL * '  ' + message
+        print(__LOG_LEVEL * '  ' + message)
 
 
 def log(pixiv_id, message = None):
@@ -85,9 +85,9 @@ class DB:
     # 构造函数时连接数据库
     def __init__(self):
         try:
-            self._ = MySQLdb.connect( CONFIG['DB_HOST'], CONFIG['DB_USER'], CONFIG['DB_PASS'], CONFIG['DB_NAME'], charset="utf8" )
-            self.c  = self._.cursor( MySQLdb.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
-        except Exception, e:
+            self._ = pymysql.connect( CONFIG['DB_HOST'], CONFIG['DB_USER'], CONFIG['DB_PASS'], CONFIG['DB_NAME'], charset="utf8" )
+            self.c  = self._.cursor( pymysql.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
+        except Exception as e:
             log(-1, '数据库连接出错 : %s' % e)
             exit(1)
 
@@ -104,7 +104,7 @@ class DB:
             else : 
                 self.c.execute(sql)
             return self.c.fetchall()
-        except Exception, e:
+        except Exception as e:
             log('Error in DB Query')
             log(str(e))
             return False
@@ -114,7 +114,7 @@ class DB:
         try:
             self.c.execute(sql, data)
             return self._.insert_id()
-        except Exception, e:
+        except Exception as e:
             log('Error in DB execute')
             log(str(e))
             return False
@@ -177,38 +177,3 @@ class ExtendedPixivPy(AppPixivAPI):
     def illust_ranking(self, rank_name):
         ppyName = MODE[rank_name]['ppyName']
         return super(self.__class__, self).illust_ranking(ppyName)
-
-
-def FetchPixiv(aapi, mode):
-    # 获取排行
-    debug('Get %s ranking page' % mode)
-    r = aapi.illust_ranking(mode)
-    if 'error' in r:
-        log('Failed to get %s ranking list, will exit' % mode)
-        log(json.dumps(r))
-        raise RuntimeError()
-
-    # 筛选出我们需要的数据
-    tmp = {
-        'ranking': 0 # 这个ranking直接作为int传入filter会造成无法修改，所以稿一个dict，用修改attr的方式实现
-    }
-    def filter(obj):
-        tmp['ranking'] += 1
-        return {
-            'id': obj.id,
-            'title': obj.title,
-            'author': obj.user.name,
-            'uid': obj.user.id,
-            'date': obj.create_date,
-            'view': obj.total_view,
-            'bookmarks': obj.total_bookmarks,
-            'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id,
-            'ranking': tmp['ranking'], # 这幅图在榜上排第几，好像暂时只能靠这样自己加
-            'images': {
-                'medium': obj.image_urls.medium,
-                'large': obj.image_urls.large,
-                'original': obj.meta_single_page.original_image_url if hasattr(obj.meta_single_page, 'original_image_url') else obj.meta_pages[0].image_urls.original
-            }
-        }
-    data = map(filter, r.illusts)
-    return data
