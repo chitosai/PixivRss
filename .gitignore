@@ -1,9 +1,6 @@
 /cache/
 *.pyc
-/pixiv.cookie.txt
 /config.py
 /test.py
-/ranking.html
-/exist.*.json
 /pixiv.token.txt
 /env.py
