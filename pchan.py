@@ -13,7 +13,7 @@ def post_weibo(pixiv_id, image, file_path):
     debug('Posting weibo')
     weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳 %s %s' \
                     % (image['ranking'], image['author'], image['title'], \
-                     'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + str(pixiv_id),
+                     'https://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + str(pixiv_id),
                      weibo_nickname)
 
     sina_url = do_post_weibo(weibo_text, file_path)
@@ -96,7 +96,7 @@ def get_weibo_nickname(pixiv_uid):
             return ''
         # 从签名里匹配
         signature = user_profile.user.comment
-        m = re.search('http://(?:www\.)?weibo\.com/(.+?)[\r\n\s]', signature, re.S)
+        m = re.search('https://(?:www\.)?weibo\.com/(.+?)[\r\n\s]', signature, re.S)
         if m:
             weibo_uid = m.group(1)
             # 保存
@@ -113,7 +113,7 @@ def get_weibo_nickname(pixiv_uid):
     debug('Weibo found: %s' % weibo_uid)
     SetLogLevel(-1)
     # 去weibo查昵称
-    weibo_user_page = Get('http://weibo.com/' + weibo_uid)
+    weibo_user_page = Get('https://weibo.com/' + weibo_uid)
 
     if not weibo_user_page:
         log(pixiv_uid, 'Error: failed to open weibo profile page')
