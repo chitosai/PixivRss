@@ -58,7 +58,7 @@ def GenerateRss(mode, data):
         real_total = min(total, len(data))
         for i in range(real_total):
             image = data[i]
-            image_link = 'https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=' + str(image['id'])
+            image_link = 'https://www.pixiv.net/artworks/' + str(image['id'])
 
             desc  = u'<p>第 %s 位</p>' % image['ranking']
             desc += u'<p>画师：' + image['author']
