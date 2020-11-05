@@ -76,7 +76,7 @@ def GenerateRss(mode, data):
                     <pubDate>%s</pubDate>
                 </item>''' % (
                                 image['title'],
-                                image_link,
+                                image['id'],
                                 image_link,
                                 desc,
                                 FormatTime(image['date'])
