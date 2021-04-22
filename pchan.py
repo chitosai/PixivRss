@@ -19,8 +19,8 @@ def post_weibo(pixiv_id, image, file_path):
 
     # 排行发微博
     debug('Posting weibo')
-    weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。大图请戳： %s。 %s' \
-                    % (image['ranking'], image['author'], image['title'], 'https://www.pixiv.net/artworks/' + str(pixiv_id),
+    weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。Pid: %s。 %s' \
+                    % (image['ranking'], image['author'], image['title'], str(pixiv_id),
                      weibo_nickname)
 
     is_posted = do_post_weibo(weibo_text, pic_id)
