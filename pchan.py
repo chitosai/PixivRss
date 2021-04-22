@@ -112,8 +112,8 @@ def download_image(illust):
     debug('Download image')
     filename = '%s.jpg' % illust['id']
     filepath = os.path.join(TEMP_PATH, filename)
-    # 突然开始出现original字段为空的情况，总之处理一下吧 id=85217944
-    picpath = illust['images']['original'] or illust['images']['large'] or illust['images']['medium']
+    # 原本似乎是抓original尺寸的，但是还是不要发原图了吧，现在自己模拟m.weibo的请求怕一张2m/3m/4m的图太大了容易出问题
+    picpath = illust['images']['large'] or illust['images']['medium']
     if not picpath:
         log('Image url not found!')
         log(json.dumps(illust))
