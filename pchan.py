@@ -51,9 +51,9 @@ def do_upload_image_to_weibo(filepath):
         }
         # 这里文件必须要用[()]的形式写，这样封装出来的form才是multipart，发出的请求会带上
         # 'Content-Type': 'multipart/form-data; boundary=xxxxxx' 的头
-        filename, file_extension = os.path.splitext(filepath)
+        extension = filepath.split('.')[-1]
         files = [
-            ('pic', ('1.' + file_extension, f, 'image/' + file_extension))
+            ('pic', ('1.' + extension, f, 'image/' + extension))
         ]
         weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
         weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
