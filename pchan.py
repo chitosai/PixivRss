@@ -235,6 +235,6 @@ if __name__ == '__main__':
             debug('Reached WEIBO_PER_HOUR: %s' % (WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG))
             break
         SetLogLevel(-2)
-        # +1s
-        time.sleep(1)
+        # +10s，现在是自己模拟请求发图了，为了安全还是把间隔拉大一点
+        time.sleep(10)
     debug('All job done, processed %s item(s)' % count)
