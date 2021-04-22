@@ -1,32 +1,28 @@
 from config import *
 from utility import *
 
-from math import floor
-
 class Weibo():
     def __init__(self):
         # load local cookies
         f = open(WEIBO_COOKIE_FILE, 'r')
-        self.cookies = json.load(f)
+        self.originalCookieStr = f.read()
         f.close()
-
-        self.originalCookieStr = json.dumps(self.cookies)
+        self.cookies = json.loads(self.originalCookieStr)
 
         # prepare requests, fill in the previous cookies
         self.s = requests.Session()
         self.s.cookies.update(self.cookies)
 
-    # heartbeat
-    def heartbeat(self):
         # prepare headers
-        headers = {
+        self.s.headers = {
             'mweibo-pwa': "1",
+            'origin': 'https://m.weibo.cn',
             'referer': 'https://m.weibo.cn/sw.js',
-            'x-requested-with': 'XMLHttpRequest',
-            'x-xsrf-token': self.cookies['XSRF-TOKEN'],
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36'
         }
-        self.s.headers = headers
+
+    def heartbeat(self):
+        self.s.headers['x-xsrf-token'] = self.cookies['XSRF-TOKEN']
 
         # send request
         r = self.s.get('https://m.weibo.cn/api/config')
@@ -43,8 +39,8 @@ class Weibo():
             log(r.cookies)
         else:
             # save updated cookies
-            f = open(WEIBO_COOKIE_FILE, 'w')
             cookies = json.dumps(self.s.cookies.get_dict())
+            f = open(WEIBO_COOKIE_FILE, 'w')
             f.write(cookies)
             f.close()
             debug('Weibo heartbeat refresh succeed')

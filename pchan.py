@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 from utility import *
 from make import FetchPixiv
+from weibo import Weibo
 
 db = DB()
+weibo = Weibo()
 
 def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
+
+    # 先传图
+    debug('Uploading image to Weibo')
+    pic_id = do_upload_image_to_weibo(file_path)
+    if not pic_id:
+        return False
 
     # 排行发微博
     debug('Posting weibo')
@@ -15,13 +23,13 @@ def post_weibo(pixiv_id, image, file_path):
                     % (image['ranking'], image['author'], image['title'], str(pixiv_id),
                      weibo_nickname)
 
-    sina_url = do_post_weibo(weibo_text, file_path)
-    # 通过是否获取到了渣浪图片地址来判断是否上传成功
-    if not sina_url:
-        log(pixiv_id, 'Failed to get image url from sina')
+    is_posted = do_post_weibo(weibo_text, pic_id)
+    if not is_posted:
+        log(pixiv_id, 'Failed to post weibo')
         return False
+
     # 成功
-    debug('Post success, image url: ' + sina_url)
+    debug('Post success')
     # 记录一下
     insert_post_weibo_history(pixiv_id)
     # 记录用户上榜
@@ -29,38 +37,74 @@ def post_weibo(pixiv_id, image, file_path):
         award_log(image['uid'])
 
 
-def do_post_weibo(message, filepath):
+def do_upload_image_to_weibo(filepath):
+    global weibo
     # 准备返回值，默认为False，上传完毕修改为图片url
     r = False
     # upload
     try:
         f = open(filepath, 'rb')
         data = {
-            'status': message,
-            'rip': '61.133.235.27', # 发微博接口更新后要传发微博者的真实ip，搞个青海的ip凑凑数
-            'access_token': WEIBO['prod']['ACCESS_TOKEN'] if not DEBUG else WEIBO['test']['ACCESS_TOKEN']
+            'type': 'json',
+            '_spr': 'screen:1920x1080',
+            'st': weibo.cookies['XSRF-TOKEN']
         }
-        files = {
-            'pic': f
-        }
-        res = requests.post('https://api.weibo.com/2/statuses/share.json', data = data, files = files)
-        if res.status_code != 200:
-            log('Weibo responsed with code != 200, code: %s' % res.status_code)
-            if '20053' in res.text:
-                # {"error":"Your Weibo has been successfully released and needs manual review for 3 minutes. Please be patient.\nIf you have any questions, please contact the exclusive customer service, or call 4000960960, more help please enter the customer service center.","error_code":20053,"request":"/2/statuses/share.json"}
-                # 微博新增了这样一种情况，本身是作为失败返回的，并且也确实拿不到大图地址，但是微博却成功发出去了，所以也算是成功吧
-                r = 'WEIBO_MANUAL_REVIEW'
-            else:
-                log(filepath, res.text)
+        # 这里文件必须要用[()]的形式写，这样封装出来的form才是multipart，发出的请求会带上
+        # 'Content-Type': 'multipart/form-data; boundary=xxxxxx' 的头
+        files = [
+            ('pic', ('1.jpg', f, 'image/jpeg'))
+        ]
+        weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
+        weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
+        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/uploadPic', data = data, files = files)
+        debug('upload image to weibo returns: ')
+        debug(r2.text)
+        data = r2.json()
+        if 'pic_id' in data:
+            r = data['pic_id']
         else:
-            r = res.json()['original_pic']
+            log('upload image to weibo failed')
+            log(r2.text)
     except Exception as err:
-        log('Weibo post failed')
+        log('Weibo post failed with error')
         log(filepath, err)
     finally:
         f.close()
         os.remove(filepath)
         return r
+
+
+def do_post_weibo(message, pic_id):
+    global weibo
+    try:
+        data = {
+            'content': message,
+            'visible': 1,                       # 1 = 仅自己可见，0 = 全部可见？
+            '_spr': 'screen:1920x1080',
+            'st': weibo.cookies['XSRF-TOKEN'],
+            'picId': pic_id                     # 这是提前上传的图片的id
+        }
+        weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
+        weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
+        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/update', data = data)
+        debug('post weibo returns:')
+        debug(r2.text)
+        data = r2.json()
+        if data['ok'] == 1:
+            return True
+        else:
+            log('upload image to weibo failed')
+            SetLogLevel(+2)
+            log('Payload sent:')
+            log(json.dumps(data))
+            log('Return:')
+            log(r2.text)
+            SetLogLevel(-2)
+            return False
+    except Exception as err:
+        log('Weibo post failed with error')
+        log(err)
+        return False
 
 
 # 下载原图
