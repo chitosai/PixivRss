@@ -220,6 +220,10 @@ if __name__ == '__main__':
         pixiv_id = illust['id']
         debug('* Itering no.%s' % illust['ranking'])
         SetLogLevel(+2)
+        # 如果作者在黑名单里直接跳过
+        if illust['uid'] in BLACKLIST:
+            debug('Author %s in Blacklist, will skip' % illust['uid'])
+            continue
         # 检查有没有发过
         r = check_if_posted(pixiv_id)
         if r and len(r):
