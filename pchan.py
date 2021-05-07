@@ -135,7 +135,7 @@ def get_weibo_nickname(pixiv_uid):
     if not len(r):
         user_profile = aapi.user_detail(pixiv_uid)
         if not user_profile or 'error' in user_profile:
-            log('Failed to get pixiv user profile')
+            log(pixiv_uid, 'Failed to get pixiv user profile')
             SetLogLevel(-1)
             return ''
         # 从签名里匹配
