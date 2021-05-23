@@ -1,4 +1,4 @@
 requests>=2.12.1
 pixivpy>=3.5.0
-PyMySQL=0.10.1
+PyMySQL==0.10.1
 Pillow
