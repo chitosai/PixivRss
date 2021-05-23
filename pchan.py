@@ -115,7 +115,6 @@ def download_image(illust):
     filepath = os.path.join(TEMP_PATH, filename)
     # 原本似乎是抓original尺寸的，但是还是不要发原图了吧，现在自己模拟m.weibo的请求怕一张2m/3m/4m的图太大了容易出问题
     # 还是试试看original先吧。。可以的话还是传清晰的图好
-    # 草，试了下立刻就失败了。。还是算了吧
     picpath = illust['images']['original'] or illust['images']['large'] or illust['images']['medium']
     if not picpath:
         log('Image url not found!')
@@ -123,6 +122,17 @@ def download_image(illust):
         raise RuntimeError()
     aapi.download(picpath, path = TEMP_PATH, name = filename)
     debug('Download finished, saved to %s' % filepath)
+    # 自己拯救一下试试，检查文件尺寸，如果超过2M就用Pillow压缩一遍
+    originalSize = os.path.getsize(filepath)
+    if originalSize > 2000000:
+        SetLogLevel(+2)
+        log(illust['id'], 'File size %s, will run a compress' % originalSize)
+        from PIL import Image
+        image = Image.open(filepath)
+        # 直接覆盖原图，优化，质量85
+        image.save(filepath, 'JPEG', optimize = True, quality = 85)
+        log(illust['id'], 'Compressed size: %s' % os.path.getsize(filepath))
+        SetLogLevel(-2)
     return filepath
 
 
