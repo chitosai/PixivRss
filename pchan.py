@@ -115,6 +115,7 @@ def download_image(illust):
     filepath = os.path.join(TEMP_PATH, filename)
     # 原本似乎是抓original尺寸的，但是还是不要发原图了吧，现在自己模拟m.weibo的请求怕一张2m/3m/4m的图太大了容易出问题
     # 还是试试看original先吧。。可以的话还是传清晰的图好
+    # 草，试了下立刻就失败了。。还是算了吧
     picpath = illust['images']['original'] or illust['images']['large'] or illust['images']['medium']
     if not picpath:
         log('Image url not found!')
