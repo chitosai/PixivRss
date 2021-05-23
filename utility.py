@@ -86,7 +86,7 @@ class DB:
     def __init__(self):
         try:
             self._ = pymysql.connect( CONFIG['DB_HOST'], CONFIG['DB_USER'], CONFIG['DB_PASS'], CONFIG['DB_NAME'], charset="utf8" )
-            self.c  = self._.cursor( pymysql.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
+            self.c = self._.cursor( pymysql.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
         except Exception as e:
             log(-1, '数据库连接出错 : %s' % e)
             exit(1)
