@@ -23,7 +23,7 @@ def post_weibo(pixiv_id, image, file_path):
                     % (image['ranking'], image['author'], image['title'], str(pixiv_id),
                      weibo_nickname)
 
-    is_posted = do_post_weibo(weibo_text, pic_id)
+    is_posted = do_post_weibo(pixiv_id, weibo_text, pic_id)
     if not is_posted:
         log(pixiv_id, 'Failed to post weibo')
         return False
@@ -39,6 +39,9 @@ def post_weibo(pixiv_id, image, file_path):
 
 def do_upload_image_to_weibo(filepath):
     global weibo
+    filename = os.path.basename(filepath)
+    pixiv_id = filename.split('.')[0]
+    extension = filename.split('.')[1]
     # 准备返回值，默认为False，上传完毕修改为图片url
     r = False
     # upload
@@ -51,7 +54,6 @@ def do_upload_image_to_weibo(filepath):
         }
         # 这里文件必须要用[()]的形式写，这样封装出来的form才是multipart，发出的请求会带上
         # 'Content-Type': 'multipart/form-data; boundary=xxxxxx' 的头
-        extension = filepath.split('.')[-1]
         files = [
             ('pic', ('1.' + extension, f, 'image/' + extension))
         ]
@@ -64,18 +66,18 @@ def do_upload_image_to_weibo(filepath):
         if 'pic_id' in data:
             r = data['pic_id']
         else:
-            log('upload image to weibo failed')
-            log(r2.text)
+            log(pixiv_id, 'post weibo failed')
+            log(pixiv_id, r2.text)
     except Exception as err:
-        log('Weibo post failed with error')
-        log(filepath, err)
+        log(pixiv_id, 'Weibo post failed with error')
+        log(pixiv_id, err)
     finally:
         f.close()
         os.remove(filepath)
         return r
 
 
-def do_post_weibo(message, pic_id):
+def do_post_weibo(pixiv_id, message, pic_id):
     global weibo
     try:
         data = {
@@ -94,17 +96,17 @@ def do_post_weibo(message, pic_id):
         if data['ok'] == 1:
             return True
         else:
-            log('upload image to weibo failed')
+            log(pixiv_id, 'post weibo failed')
             SetLogLevel(+2)
-            log('Payload sent:')
-            log(json.dumps(data))
-            log('Return:')
-            log(r2.text)
+            log(pixiv_id, 'Payload sent:')
+            log(pixiv_id, json.dumps(data))
+            log(pixiv_id, 'Return:')
+            log(pixiv_id, r2.text)
             SetLogLevel(-2)
             return False
     except Exception as err:
-        log('Weibo post failed with error')
-        log(err)
+        log(pixiv_id, 'Weibo post failed with error')
+        log(pixiv_id, err)
         return False
 
 
