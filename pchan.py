@@ -129,7 +129,8 @@ def download_image(illust):
         log(illust['id'], 'File size %s, will run a compress' % originalSize)
         from PIL import Image
         image = Image.open(filepath)
-        # 直接覆盖原图，优化，质量85
+        # 直接覆盖原图，抛弃Alpha通道，优化文件尺寸，质量85
+        image = image.convert('RGB')
         image.save(filepath, 'JPEG', optimize = True, quality = 85)
         log(illust['id'], 'Compressed size: %s' % os.path.getsize(filepath))
         SetLogLevel(-2)
