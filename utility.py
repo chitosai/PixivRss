@@ -127,42 +127,13 @@ class ExtendedPixivPy(AppPixivAPI):
     def __init__(self):
         debug('Init ppy class')
         super(self.__class__, self).__init__()
-        try:
-            f = open(TOKEN_FILE, 'r')
-            tokens = json.load(f)
-            f.close()
-            self.access_token = tokens['access_token']
-            self.refresh_token = tokens['refresh_token']
-            debug('Local token loaded, will refresh it')
-            self.auth()
-            self.verifyToken()
-        except BaseException as err:
-            log('Error when loading pixiv access_token')
-            log(str(err))
-    
-    # 验证token
-    def verifyToken(self, retry = False):
-        try:
-            r = self.user_detail(100)
-            if 'error' in r:
-                log('Token verify failed, will exit')
-                raise RuntimeError('Token verify failed, will exit')
-            else:
-                debug('Token OK')
-                self.saveToken()
-        except PixivError as err:
-            log('Error in login')
-            log(str(err))
-            raise RuntimeError('Error in login')
-    
-    # 保存token
-    def saveToken(self):
-        f = open(TOKEN_FILE, 'w')
-        f.write(json.dumps({
-            'access_token': self.access_token,
-            'refresh_token': self.refresh_token
-        }))
+        # load token
+        f = open(TOKEN_FILE, 'r')
+        tokens = json.load(f)
         f.close()
+        self.access_token = tokens['access_token']
+        self.refresh_token = tokens['refresh_token']
+        debug('Local token loaded')
 
     # 不知道为什么ppy用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
     def illust_ranking(self, rank_name):

@@ -97,6 +97,7 @@ def refresh(refresh_token):
         headers={"User-Agent": USER_AGENT},
     )
     print_auth_token_response(response)
+    return response.text
 
 
 def main():
