@@ -136,7 +136,7 @@ class ExtendedPixivPy(AppPixivAPI):
             debug('Local token loaded, will refresh it')
             self.auth()
             self.verifyToken()
-        except Error as err:
+        except BaseException as err:
             log('Error when loading pixiv access_token')
             log(str(err))
     
