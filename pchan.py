@@ -8,6 +8,10 @@ weibo = Weibo()
 
 def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
+    
+    # 从pixiv获取作品标签
+    tags = get_work_tags(pixiv_id)
+
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
 
@@ -19,8 +23,8 @@ def post_weibo(pixiv_id, image, file_path):
 
     # 排行发微博
     debug('Posting weibo')
-    weibo_text = u'#pixiv# 每日排行速报：第%s位，来自画师 %s 的 %s。Pid: %s。 %s' \
-                    % (image['ranking'], image['author'], image['title'], str(pixiv_id),
+    weibo_text = u'%s Pixiv每日排行速报：第%s位，来自画师 %s 的 %s。Pid: %s。 %s' \
+                    % (tags, image['ranking'], image['author'], image['title'], str(pixiv_id),
                      weibo_nickname)
 
     is_posted = do_post_weibo(pixiv_id, weibo_text, pic_id)
@@ -35,6 +39,14 @@ def post_weibo(pixiv_id, image, file_path):
     # 记录用户上榜
     if weibo_nickname != '':
         award_log(image['uid'])
+
+def get_work_tags(pixiv_id):
+    # 获取每个作品的前3个tag，拼成#xxx的字符串返回
+    data = aapi.illust_detail(pixiv_id)
+    tags = data['illust']['tags']
+    tags = tags[0:3]
+    tags = map(lambda x : u'#' + x['name'], tags)
+    return ' '.join(tags)
 
 
 def do_upload_image_to_weibo(filepath):
