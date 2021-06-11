@@ -133,29 +133,20 @@ class ExtendedPixivPy(AppPixivAPI):
             f.close()
             self.access_token = tokens['access_token']
             self.refresh_token = tokens['refresh_token']
-            debug('Local token loaded, will verify it')
-        except:
-            debug('Local token empty, try login')
-            self.login(CONFIG['PIXIV_USER'], CONFIG['PIXIV_PASS'])
-            debug('After login, will verify token')
-        finally:
+            debug('Local token loaded, will refresh it')
+            self.auth(refresh_token=self.refresh_token)
             self.verifyToken()
+        except Error as err:
+            log('Error when loading pixiv access_token')
+            log(str(err))
     
     # 验证token
     def verifyToken(self, retry = False):
         try:
             r = self.user_detail(100)
             if 'error' in r:
-                if not retry:
-                    debug('Token expired, try refresh')
-                    self.auth()
-                    debug('Refreshed, will verify it')
-                    self.verifyToken(True)
-                else:
-                    # 已经尝试refresh过一次token，还是报错，可能是有问题
-                    log('Token verify failed again, will exit')
-                    log(json.dumps(r))
-                    raise RuntimeError('Token verify failed again, will exit')
+                log('Token verify failed, will exit')
+                raise RuntimeError('Token verify failed, will exit')
             else:
                 debug('Token OK')
                 self.saveToken()
