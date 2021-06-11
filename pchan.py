@@ -177,18 +177,17 @@ def get_weibo_nickname(pixiv_uid):
     if not weibo_user_page:
         log(pixiv_uid, 'Error: failed to open weibo profile page')
         return ''
-
+    
     m = re.search(u'Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
+    if not m:
+        # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
+        m = re.search(u'<title>(.+?)的微博_微博', weibo_user_page)
+        
     if m:
         return u' @%s' % m.group(1)
     else:
-        # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
-        m = re.search(u'<title>(.+?)的微博_微博', weibo_user_page)
-        if m:
-            return u' @%s' % m.group(1)
-        else:
-            log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + weibo_uid)
-            return ''
+        log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + weibo_uid)
+        return ''
 
 
 # 根据pixiv_user_id从数据库查找微博昵称
@@ -229,7 +228,7 @@ if __name__ == '__main__':
     data = FetchPixiv(aapi, 'daily')
 
     # 开始遍历
-    count   = 0 # 遍历了几次，用这个变量来确保每小时不会发布超过WEIBO_PER_HOUR
+    count = 0 # 遍历了几次，用这个变量来确保每小时不会发布超过WEIBO_PER_HOUR
     debug('Begin to iter daily ranking list')
     for illust in data:
         pixiv_id = illust['id']
