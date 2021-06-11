@@ -128,12 +128,16 @@ class ExtendedPixivPy(AppPixivAPI):
         debug('Init ppy class')
         super(self.__class__, self).__init__()
         # load token
-        f = open(TOKEN_FILE, 'r')
-        tokens = json.load(f)
-        f.close()
-        self.access_token = tokens['access_token']
-        self.refresh_token = tokens['refresh_token']
-        debug('Local token loaded')
+        try:
+            f = open(TOKEN_FILE, 'r')
+            tokens = json.load(f)
+            f.close()
+            self.access_token = tokens['access_token']
+            self.refresh_token = tokens['refresh_token']
+            debug('Local token loaded')
+        except BaseException as err:
+            log('Failed to load access_token from file')
+            log(str(err))
 
     # 不知道为什么ppy用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
     def illust_ranking(self, rank_name):
