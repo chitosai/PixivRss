@@ -148,7 +148,7 @@ class ExtendedPixivPy(AppPixivAPI):
             if 'error' in r:
                 if not retry:
                     debug('Token expired, try refresh')
-                    self.auth(refresh_token=_REFRESH_TOKEN)
+                    self.auth()
                     debug('Refreshed, will verify it')
                     self.verifyToken(True)
                 else:
