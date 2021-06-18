@@ -25,25 +25,28 @@ class Weibo():
         self.s.headers['x-xsrf-token'] = self.cookies['XSRF-TOKEN']
 
         # send request
-        r = self.s.get('https://m.weibo.cn/api/config')
-
-        # check if return is ok
-        data = r.json()
-        if data['ok'] != 1:
-            log('Weibo heartbeat refresh faild!')
-            log('--- Sent cookie')
-            log(self.originalCookieStr)
-            log('--- Response:')
-            log(r.text)
-            log('--- Return Cookie:')
-            log(r.cookies)
-        else:
-            # save updated cookies
-            cookies = json.dumps(self.s.cookies.get_dict())
-            f = open(WEIBO_COOKIE_FILE, 'w')
-            f.write(cookies)
-            f.close()
-            debug('Weibo heartbeat refresh succeed')
+        try:
+            r = self.s.get('https://m.weibo.cn/api/config', timeout = 10)
+            # check if return is ok
+            data = r.json()
+            if data['ok'] != 1:
+                log('Weibo heartbeat refresh faild!')
+                log('--- Sent cookie')
+                log(self.originalCookieStr)
+                log('--- Response:')
+                log(r.text)
+                log('--- Return Cookie:')
+                log(r.cookies)
+            else:
+                # save updated cookies
+                cookies = json.dumps(self.s.cookies.get_dict())
+                f = open(WEIBO_COOKIE_FILE, 'w')
+                f.write(cookies)
+                f.close()
+                debug('Weibo heartbeat refresh succeed')
+        except BaseException as err:
+            log('heartbeat failed');
+            log(str(err));
 
 # when invoked from terminal, call heartbeat
 if __name__ == '__main__':

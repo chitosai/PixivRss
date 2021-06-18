@@ -71,7 +71,7 @@ def do_upload_image_to_weibo(filepath):
         ]
         weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
         weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
-        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/uploadPic', data = data, files = files)
+        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/uploadPic', data = data, files = files, timeout = 60)
         debug('upload image to weibo returns: ')
         debug(r2.text)
         data = r2.json()
@@ -101,7 +101,7 @@ def do_post_weibo(pixiv_id, message, pic_id):
         }
         weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
         weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
-        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/update', data = data)
+        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/update', data = data, timeout = 60)
         debug('post weibo returns:')
         debug(r2.text)
         data = r2.json()
