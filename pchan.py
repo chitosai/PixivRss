@@ -10,7 +10,7 @@ def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
     
     # 从pixiv获取作品标签
-    tags = get_first_three_tags(image.tags)
+    tags = get_first_three_tags(image['tags'])
 
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
