@@ -10,7 +10,7 @@ def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
     
     # 从pixiv获取作品标签
-    tags = get_pixiv_tags(pixiv_id)
+    tags = get_first_three_tags(image.tags)
 
     # 获取微博昵称
     weibo_nickname = get_weibo_nickname(image['uid'])
@@ -40,11 +40,9 @@ def post_weibo(pixiv_id, image, file_path):
     if weibo_nickname != '':
         award_log(image['uid'])
 
-def get_pixiv_tags(pixiv_id):
+def get_first_three_tags(_tags):
     # 获取每个作品的前3个tag，拼成#xxx的字符串返回
-    data = aapi.illust_detail(pixiv_id)
-    tags = data['illust']['tags']
-    tags = tags[0:3]
+    tags = _tags[0:3]
     tags = map(lambda x : (u'#%s#' % x['name']), tags)
     return ' '.join(tags)
 

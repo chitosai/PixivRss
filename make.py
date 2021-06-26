@@ -31,7 +31,8 @@ def FetchPixiv(aapi, mode):
                 'medium': obj.image_urls.medium,
                 'large': obj.image_urls.large,
                 'original': obj['meta_single_page']['original_image_url'] if hasattr(obj['meta_single_page'], 'original_image_url') else obj['meta_pages'][0]['image_urls']['original']
-            }
+            },
+            'tags': obj.tags
         }
     data = list(map(filter, r.illusts))
     return data
