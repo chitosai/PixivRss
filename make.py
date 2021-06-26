@@ -30,7 +30,7 @@ def FetchPixiv(aapi, mode):
             'images': {
                 'medium': obj.image_urls.medium,
                 'large': obj.image_urls.large,
-                'original': obj.meta_single_page.original_image_url if hasattr(obj.meta_single_page, 'original_image_url') else obj.meta_pages[0].image_urls.original
+                'original': obj['meta_single_page']['original_image_url'] if hasattr(obj['meta_single_page'], 'original_image_url') else obj['meta_pages'][0]['image_urls']['original']
             }
         }
     data = list(map(filter, r.illusts))
