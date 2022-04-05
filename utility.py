@@ -54,6 +54,15 @@ def Get(url):
         return r.content
 
 
+# 有报错时发一个提醒给我，不然这玩意儿挂了真是注意不到
+def Notify(message):
+    requests.post(PUSHOVER_API, data={
+        'token': PUSHOVER_APP,
+        'user': PUSHOVER_USER,
+        'message': message,
+    })
+
+
 __LOG_LEVEL = 0
 def SetLogLevel(delta):
     global __LOG_LEVEL
@@ -78,6 +87,7 @@ def log(pixiv_id, message = None):
         debug(message)
         f.write('%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message))
         f.close()
+        Notify(message)
 
 
 # 数据库操作
