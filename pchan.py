@@ -138,13 +138,13 @@ def download_image(illust):
     originalSize = os.path.getsize(filepath)
     if originalSize > 2000000:
         SetLogLevel(+2)
-        log(illust['id'], 'File size %s, will run a compress' % originalSize)
+        debug(illust['id'], 'File size %s, will run a compress' % originalSize)
         from PIL import Image
         image = Image.open(filepath)
         # 直接覆盖原图，抛弃Alpha通道，优化文件尺寸，质量85
         image = image.convert('RGB')
         image.save(filepath, 'JPEG', optimize = True, quality = 85)
-        log(illust['id'], 'Compressed size: %s' % os.path.getsize(filepath))
+        debug(illust['id'], 'Compressed size: %s' % os.path.getsize(filepath))
         SetLogLevel(-2)
     return filepath
 
