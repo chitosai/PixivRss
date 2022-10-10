@@ -23,7 +23,7 @@ def post_weibo(pixiv_id, image, file_path):
 
     # 排行发微博
     debug('Posting weibo')
-    weibo_text = u'#Pixiv#每日排行速报：第%s位，来自画师 %s 的 %s。Pid: %s。%s %s' \
+    weibo_text = u'#P站每日排行速报# 第%s位，来自画师 %s 的 %s。Pid: %s。%s %s' \
                     % (image['ranking'], image['author'], image['title'], str(pixiv_id), tags, 
                      weibo_nickname)
 
