@@ -1,4 +1,4 @@
-requests>=2.12.1
-pixivpy>=3.5.0
-PyMySQL==0.10.1
-Pillow
+requests==2.27.1
+PixivPy==3.5.11
+PyMySQL==1.0.2
+Pillow==8.4.0

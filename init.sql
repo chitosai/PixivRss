@@ -19,7 +19,7 @@ CREATE TABLE `award_log` (
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上榜时间',
   `type` tinyint(4) NOT NULL,
   `uid` int(11) NOT NULL COMMENT '上榜用户pixiv_id'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -30,7 +30,7 @@ CREATE TABLE `award_log` (
 CREATE TABLE `pixiv_weibo_id_map` (
   `pixiv_uid` int(8) NOT NULL,
   `weibo_uid` varchar(32) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Pixiv_id与Weibo_id的映射表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Pixiv_id与Weibo_id的映射表';
 
 -- --------------------------------------------------------
 
@@ -41,7 +41,7 @@ CREATE TABLE `pixiv_weibo_id_map` (
 CREATE TABLE `weibo_post_history` (
   `pixiv_id` int(11) NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Indexes for dumped tables

@@ -1,9 +1,15 @@
 /cache/
-*.pyc
+/scripts/
 /config.py
 /test.py
 /env.py
 /_pixiv.token.json
 /_weibo.cookie.json
 /_weibo.cookie.original.json
+/.venv/
+/.local/
+
+*.pyc
 cron
+/LOCAL_SETUP.md
+AGENTS.md
