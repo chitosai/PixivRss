@@ -143,7 +143,7 @@ class ExtendedPixivPy(AppPixivAPI):
     # 实例化的时候自动从本地文件读取token
     def __init__(self):
         debug('Init ppy class')
-        super(self.__class__, self).__init__()
+        super(self.__class__, self).__init__(timeout=(10, 30))
         # load token
         try:
             with open(TOKEN_FILE, 'r', encoding='utf-8') as f:
