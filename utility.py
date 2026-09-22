@@ -146,15 +146,21 @@ class ExtendedPixivPy(AppPixivAPI):
         super(self.__class__, self).__init__()
         # load token
         try:
-            f = open(TOKEN_FILE, 'r')
-            tokens = json.load(f)
-            f.close()
+            with open(TOKEN_FILE, 'r', encoding='utf-8') as f:
+                tokens = json.load(f)
+            if not isinstance(tokens, dict):
+                raise ValueError('Token file does not contain a valid JSON object')
+            for field in ('access_token', 'refresh_token'):
+                value = tokens.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    raise ValueError('Missing or invalid token field: %s' % field)
             self.access_token = tokens['access_token']
             self.refresh_token = tokens['refresh_token']
             debug('Local token loaded')
-        except BaseException as err:
+        except Exception as err:
             log('Failed to load access_token from file')
             log(str(err))
+            raise
 
     # 不知道为什么ppy用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
     def illust_ranking(self, rank_name):
