@@ -71,7 +71,7 @@ def GenerateRss(mode, data):
 
             RSS += u'''<item>
                     <title><![CDATA[%s]]></title>
-                    <guid>%s</guid>
+                    <guid isPermaLink="false">%s</guid>
                     <link>%s</link>
                     <description><![CDATA[%s]]></description>
                     <pubDate>%s</pubDate>
