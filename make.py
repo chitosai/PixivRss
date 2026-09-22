@@ -86,9 +86,8 @@ def GenerateRss(mode, data):
         RSS += u'''</channel></rss>'''
 
         # 输出到文件
-        f = open(os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total)), 'w')
-        f.write(RSS)
-        f.close
+        with open(os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total)), 'w', encoding='utf-8') as f:
+            f.write(RSS)
 
     debug('[Processing] RSS file created')
 
