@@ -6,7 +6,7 @@ from config import *
 
 
 if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
-    import httplib as http_client
+    import http.client as http_client
     http_client.HTTPConnection.debuglevel = 1
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
@@ -72,22 +72,22 @@ def SetLogLevel(delta):
 def debug(message):
     global DEBUG
     if DEBUG:
-        print(__LOG_LEVEL * '  ' + message)
+        print(__LOG_LEVEL * '  ' + str(message))
 
 
 def log(pixiv_id, message = None):
-    if not message:
+    if message is None:
         message = pixiv_id
         pixiv_id = -1
-    try:
-        f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a+')
-    except:
-        f = open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'w+')
-    finally:
-        debug(message)
-        f.write('%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message))
-        f.close()
-        Notify(message)
+
+    message = str(message)
+    debug(message)
+    Notify(message)
+    
+    log_content = '%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message)
+    with open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a', encoding='utf-8') as f:
+        f.write(log_content)
+
 
 
 # 数据库操作
