@@ -2,8 +2,8 @@
 from utility import *
 from make import FetchPixiv
 from weibo import Weibo
+from utils.db import db
 
-db = DB()
 weibo = Weibo()
 
 def post_weibo(pixiv_id, image, file_path):
@@ -35,10 +35,10 @@ def post_weibo(pixiv_id, image, file_path):
     # 成功
     debug('Post success')
     # 记录一下
-    insert_post_weibo_history(pixiv_id)
+    db.insert_post_weibo_history(pixiv_id)
     # 记录用户上榜
     if weibo_nickname != '':
-        award_log(image['uid'])
+        db.award_log(image['uid'])
 
 def get_first_three_tags(_tags):
     # 获取每个作品的前3个tag，拼成#xxx的字符串返回
@@ -154,7 +154,7 @@ def get_weibo_nickname(pixiv_uid):
     pixiv_uid = str(pixiv_uid)
     SetLogLevel(+1)
     # 首先从数据库中查找
-    r = get_weibo_uid_by_(pixiv_uid)
+    r = db.get_weibo_uid_by_(pixiv_uid)
 
     # 没有
     if not len(r):
@@ -169,7 +169,7 @@ def get_weibo_nickname(pixiv_uid):
         if m:
             weibo_uid = m.group(1)
             # 保存
-            insert_id_map(pixiv_uid, weibo_uid)
+            db.insert_id_map(pixiv_uid, weibo_uid)
         else:
             debug('Weibo not found')
             SetLogLevel(-1)
@@ -200,37 +200,6 @@ def get_weibo_nickname(pixiv_uid):
         return ''
 
 
-# 根据pixiv_user_id从数据库查找微博昵称
-def get_weibo_uid_by_(pixiv_uid):
-    sql = 'SELECT `weibo_uid` FROM `pixiv_weibo_id_map` WHERE `pixiv_uid` = %s'
-    return db.Query(sql, (pixiv_id,))
-
-
-# 插入pixiv_user_id到weibo_user_id的映射
-def insert_id_map(pixiv_uid, weibo_uid):
-    sql = 'INSERT INTO `pixiv_weibo_id_map` ( `pixiv_uid`, `weibo_uid` ) VALUES ( %s, %s )'
-    return db.Run(sql, (pixiv_uid, weibo_uid))
-
-
-# 记录用户上榜
-def award_log(pixiv_uid):
-    # type字段原本是用来表示上了哪个排行的，但是由于现在只剩下日榜了，所以就直接硬编码为1了
-    # 数据库里原本的记录就暂且不处理了，反正到现在5年了也只有15000行
-    sql = 'INSERT INTO `award_log` ( `type`, `uid` ) VALUES ( %s, %s )'
-    return db.Run(sql, (1, pixiv_uid))
-
-
-# 检查有没有发过
-def check_if_posted(pixiv_id):
-    sql = 'SELECT `pixiv_id` FROM `weibo_post_history` WHERE `pixiv_id` = %s'
-    return db.Query(sql, (pixiv_id,))
-
-
-# 记录微博已发
-def insert_post_weibo_history(pixiv_id):
-    sql = 'INSERT INTO `weibo_post_history` ( `pixiv_id` ) VALUES ( %s )'
-    return db.Run(sql, (pixiv_id,))
-
 if __name__ == '__main__':
     global aapi
     # 现在只有daily一个微博了，就不要多余的判断了
@@ -249,7 +218,7 @@ if __name__ == '__main__':
             debug('Author %s in Blacklist, will skip' % illust['uid'])
             continue
         # 检查有没有发过
-        r = check_if_posted(pixiv_id)
+        r = db.check_if_posted(pixiv_id)
         if r and len(r):
             debug('Posted, will skip')
             SetLogLevel(-2)

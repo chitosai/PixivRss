@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re, time, datetime, json, logging, pymysql
+import re, time, datetime, json, logging
 import requests
 from pixivpy3 import *
 from config import *
@@ -87,54 +87,6 @@ def log(pixiv_id, message = None):
     log_content = '%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message)
     with open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a', encoding='utf-8') as f:
         f.write(log_content)
-
-
-
-# 数据库操作
-class DB:
-    # 构造函数时连接数据库
-    def __init__(self):
-        try:
-            self._ = pymysql.connect(
-                host = CONFIG['DB_HOST'],
-                user = CONFIG['DB_USER'],
-                password = CONFIG['DB_PASS'],
-                database = CONFIG['DB_NAME'],
-                charset = "utf8",
-                autocommit = True,
-            )
-            self.c = self._.cursor( pymysql.cursors.DictCursor ) # 使fetchall的返回值为带key的字典形式
-        except Exception as e:
-            log(-1, '数据库连接出错 : %s' % e)
-            exit(1)
-
-    # 析构时关闭数据库
-    def __del__(self):
-        self.c.close()
-        self._.close()
-
-    # 查询
-    def Query(self, sql, data = None):
-        try:
-            if data: 
-                self.c.execute(sql, data)
-            else : 
-                self.c.execute(sql)
-            return self.c.fetchall()
-        except Exception as e:
-            log('Error in DB Query')
-            log(str(e))
-            return False
-
-    # 执行
-    def Run(self, sql, data):
-        try:
-            self.c.execute(sql, data)
-            return self._.insert_id()
-        except Exception as e:
-            log('Error in DB execute')
-            log(str(e))
-            return False
 
 
 class ExtendedPixivPy(AppPixivAPI):
