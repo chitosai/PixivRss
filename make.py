@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import datetime
+from email.utils import formatdate, format_datetime
+
 from utility import *
 from utils.log import debug, log
 
@@ -54,7 +57,7 @@ def GenerateRss(mode, data):
     　　<copyright>Under WTFPL</copyright>
     　　<language>zh-CN</language>
     　　<lastBuildDate>%s</lastBuildDate>
-    　　<generator>PixivRss by TheC</generator>''' % (title, total, GetCurrentTime())
+    　　<generator>PixivRss by TheC</generator>''' % (title, total, formatdate(localtime = True))
 
         # 下标不要越界了
         real_total = min(total, len(data))
@@ -62,9 +65,12 @@ def GenerateRss(mode, data):
             image = data[i]
             image_link = 'https://www.pixiv.net/artworks/' + str(image['id'])
 
+            # Python 3.6 的 %z 不接受 +09:00，去掉冒号后再解析
+            published_at = datetime.datetime.strptime(image['date'].replace(':', ''), '%Y-%m-%dT%H%M%S%z')
+
             desc  = u'<p>第 %s 位</p>' % image['ranking']
             desc += u'<p>画师：' + image['author']
-            desc += u' - 上传于：' + FormatTime(image['date'], '%Y-%m-%d %H:%M:%S')
+            desc += u' - 上传于：' + published_at.strftime('%Y-%m-%d %H:%M:%S')
             desc += u' - 阅览数：' + str(image['view'])
             desc += u' - 收藏数：' + str(image['bookmarks'])
             desc += u'</p>'
@@ -81,7 +87,7 @@ def GenerateRss(mode, data):
                                 image['id'],
                                 image_link,
                                 desc,
-                                FormatTime(image['date'])
+                                format_datetime(published_at)
                             )
 
         RSS += u'''</channel></rss>'''
