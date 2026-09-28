@@ -1,19 +1,9 @@
 # -*- coding: utf-8 -*-
-import re, time, json, logging
+import re, time, json
 import requests
 from pixivpy3 import *
 from config import *
 from utils.log import debug, log
-
-
-if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
-    import http.client as http_client
-    http_client.HTTPConnection.debuglevel = 1
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
 
 
 def Get(url):
