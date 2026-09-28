@@ -1,17 +1,17 @@
-import datetime
-import os
+import datetime, os
 
 from email.utils import formatdate, format_datetime
 from config import CONFIG, MODE, RSS_PATH
 from utils.log import debug
 
-def GenerateRss(mode, data):
+
+def generate_rss(mode, data):
     debug('[Processing] generating rss')
     title = MODE[mode]['title']
 
     for total in CONFIG['totals']:
 
-        RSS = u'''<?xml version="1.0" encoding="utf-8" ?>
+        rss = u'''<?xml version="1.0" encoding="utf-8" ?>
         <rss version="2.0">
         <channel><title>Pixiv%s排行 - 前%s</title>
     　　<link>https://rakuen.thec.me/PixivRss/</link>
@@ -30,7 +30,7 @@ def GenerateRss(mode, data):
             # Python 3.6 的 %z 不接受 +09:00，去掉冒号后再解析
             published_at = datetime.datetime.strptime(image['date'].replace(':', ''), '%Y-%m-%dT%H%M%S%z')
 
-            desc  = u'<p>第 %s 位</p>' % image['ranking']
+            desc = u'<p>第 %s 位</p>' % image['ranking']
             desc += u'<p>画师：' + image['author']
             desc += u' - 上传于：' + published_at.strftime('%Y-%m-%d %H:%M:%S')
             desc += u' - 阅览数：' + str(image['view'])
@@ -38,7 +38,7 @@ def GenerateRss(mode, data):
             desc += u'</p>'
             desc += u'<p><img src="https://pixiv.cat/%s.jpg"></p>' % image['preview']
 
-            RSS += u'''<item>
+            rss += u'''<item>
                     <title><![CDATA[%s]]></title>
                     <guid isPermaLink="false">%s</guid>
                     <link>%s</link>
@@ -52,10 +52,10 @@ def GenerateRss(mode, data):
                                 format_datetime(published_at)
                             )
 
-        RSS += u'''</channel></rss>'''
+        rss += u'''</channel></rss>'''
 
         # 输出到文件
-        with open(os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total)), 'w', encoding='utf-8') as f:
-            f.write(RSS)
+        with open(os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total)), 'w', encoding = 'utf-8') as f:
+            f.write(rss)
 
     debug('[Processing] RSS file created')

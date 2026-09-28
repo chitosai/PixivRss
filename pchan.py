@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-import json
-import os
-import re
-import time
+import json, os, re, time
 
+from PIL import Image
 from config import BLACKLIST, TEMP_PATH, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
 from env import DEBUG
-from utils.log import SetLogLevel, debug, log
 from pixiv.client import PixivClient
-from weibo import Weibo
+from utility import get
 from utils.db import db
+from utils.log import debug, log, set_log_level
+from weibo import Weibo
 
 weibo = Weibo()
 
+
 def post_weibo(pixiv_id, image, file_path):
     debug('Processing: get WEIBO_NICKNAME')
-    
+
     # 从pixiv获取作品标签
     tags = get_first_three_tags(image['tags'])
 
@@ -31,7 +31,7 @@ def post_weibo(pixiv_id, image, file_path):
     # 排行发微博
     debug('Posting weibo')
     weibo_text = u'#P站每日排行速报# 第%s位，来自画师 %s 的 %s。Pid: %s。%s %s' \
-                    % (image['ranking'], image['author'], image['title'], str(pixiv_id), tags, 
+                    % (image['ranking'], image['author'], image['title'], str(pixiv_id), tags,
                      weibo_nickname)
 
     is_posted = do_post_weibo(pixiv_id, weibo_text, pic_id)
@@ -46,6 +46,7 @@ def post_weibo(pixiv_id, image, file_path):
     # 记录用户上榜
     if weibo_nickname != '':
         db.award_log(image['uid'])
+
 
 def get_first_three_tags(_tags):
     # 获取每个作品的前3个tag，拼成#xxx的字符串返回
@@ -114,12 +115,12 @@ def do_post_weibo(pixiv_id, message, pic_id):
             return True
         else:
             log(pixiv_id, 'post weibo failed')
-            SetLogLevel(+2)
+            set_log_level(+2)
             log(pixiv_id, 'Payload sent:')
             log(pixiv_id, json.dumps(data))
             log(pixiv_id, 'Return:')
             log(pixiv_id, r2.text)
-            SetLogLevel(-2)
+            set_log_level(-2)
             return False
     except Exception as err:
         log(pixiv_id, 'Weibo post failed with error')
@@ -142,33 +143,32 @@ def download_image(illust):
     aapi.download(picpath, path = TEMP_PATH, name = filename)
     debug('Download finished, saved to %s' % filepath)
     # 自己拯救一下试试，检查文件尺寸，如果超过2M就用Pillow压缩一遍
-    originalSize = os.path.getsize(filepath)
-    if originalSize > 2000000:
-        SetLogLevel(+2)
-        debug('%s: File size %s, will run a compress' % (illust['id'], originalSize))
-        from PIL import Image
+    original_size = os.path.getsize(filepath)
+    if original_size > 2000000:
+        set_log_level(+2)
+        debug('%s: File size %s, will run a compress' % (illust['id'], original_size))
         image = Image.open(filepath)
         # 直接覆盖原图，抛弃Alpha通道，优化文件尺寸，质量85
         image = image.convert('RGB')
         image.save(filepath, 'JPEG', optimize = True, quality = 85)
         debug('%s: Compressed size: %s' % (illust['id'], os.path.getsize(filepath)))
-        SetLogLevel(-2)
+        set_log_level(-2)
     return filepath
 
 
 # 根据pixiv_user_id查找微博昵称
 def get_weibo_nickname(pixiv_uid):
     pixiv_uid = str(pixiv_uid)
-    SetLogLevel(+1)
+    set_log_level(+1)
     # 首先从数据库中查找
-    r = db.get_weibo_uid_by_(pixiv_uid)
+    r = db.get_weibo_uid_by(pixiv_uid)
 
     # 没有
     if not len(r):
         user_profile = aapi.user_detail(pixiv_uid)
         if not user_profile or 'error' in user_profile:
             log(pixiv_uid, 'Failed to get pixiv user profile')
-            SetLogLevel(-1)
+            set_log_level(-1)
             return ''
         # 从签名里匹配
         signature = user_profile.user.comment
@@ -179,27 +179,27 @@ def get_weibo_nickname(pixiv_uid):
             db.insert_id_map(pixiv_uid, weibo_uid)
         else:
             debug('Weibo not found')
-            SetLogLevel(-1)
+            set_log_level(-1)
             return ''
     # 有
     else:
         weibo_uid = r[0]['weibo_uid']
-    
-    
+
+
     debug('Weibo found: %s' % weibo_uid)
-    SetLogLevel(-1)
+    set_log_level(-1)
     # 去weibo查昵称
-    weibo_user_page = Get('https://weibo.com/' + weibo_uid)
+    weibo_user_page = get('https://weibo.com/' + weibo_uid)
 
     if not weibo_user_page:
         log(pixiv_uid, 'Error: failed to open weibo profile page')
         return ''
-    
+
     m = re.search(u'Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
     if not m:
         # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
         m = re.search(u'<title>(.+?)的微博_微博', weibo_user_page)
-        
+
     if m:
         return u' @%s' % m.group(1)
     else:
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     for illust in data:
         pixiv_id = illust['id']
         debug('* Itering no.%s' % illust['ranking'])
-        SetLogLevel(+2)
+        set_log_level(+2)
         # 如果作者在黑名单里直接跳过
         if illust['uid'] in BLACKLIST:
             debug('Author %s in Blacklist, will skip' % illust['uid'])
@@ -228,7 +228,7 @@ if __name__ == '__main__':
         r = db.check_if_posted(pixiv_id)
         if r and len(r):
             debug('Posted, will skip')
-            SetLogLevel(-2)
+            set_log_level(-2)
             continue
         # 下载medium尺寸图到本地
         filepath = download_image(illust)
@@ -236,10 +236,10 @@ if __name__ == '__main__':
         post_weibo(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
-            SetLogLevel(-2)
+            set_log_level(-2)
             debug('Reached WEIBO_PER_HOUR: %s' % (WEIBO_PER_HOUR if not DEBUG else WEIBO_PER_HOUR_DEBUG))
             break
-        SetLogLevel(-2)
+        set_log_level(-2)
         # +10s，现在是自己模拟请求发图了，为了安全还是把间隔拉大一点
         time.sleep(10)
     debug('All job done, processed %s item(s)' % count)

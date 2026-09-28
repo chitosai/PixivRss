@@ -4,16 +4,17 @@ from pixivpy3 import AppPixivAPI
 from config import MODE, TOKEN_FILE
 from utils.log import debug, log
 
+
 class PixivClient(AppPixivAPI):
     '''扩展PixivPy3的AppPixivAPI类，增加了从本地文件读取token的功能，以及对illust_ranking的自动转换'''
 
     # 实例化的时候自动从本地文件读取token
     def __init__(self):
         debug('Init ppy class')
-        super(self.__class__, self).__init__(timeout=(10, 30))
+        super(self.__class__, self).__init__(timeout = (10, 30))
         # load token
         try:
-            with open(TOKEN_FILE, 'r', encoding='utf-8') as f:
+            with open(TOKEN_FILE, 'r', encoding = 'utf-8') as f:
                 tokens = json.load(f)
             if not isinstance(tokens, dict):
                 raise ValueError('Token file does not contain a valid JSON object')
@@ -31,8 +32,8 @@ class PixivClient(AppPixivAPI):
 
     # 不知道为什么ppy用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
     def illust_ranking(self, rank_name):
-        ppyName = MODE[rank_name]['ppyName']
-        return super(self.__class__, self).illust_ranking(ppyName)
+        ppy_name = MODE[rank_name]['ppyName']
+        return super(self.__class__, self).illust_ranking(ppy_name)
 
     # 获取排行
     def fetch(self, mode):
@@ -47,6 +48,7 @@ class PixivClient(AppPixivAPI):
         tmp = {
             'ranking': 0 # 这个ranking直接作为int传入filter会造成无法修改，所以稿一个dict，用修改attr的方式实现
         }
+
         def filter(obj):
             tmp['ranking'] += 1
             return {

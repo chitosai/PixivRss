@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # https://gist.github.com/ZipFile/c9ebedb224406f4f11845ab700124362
 
+import requests
+
 from argparse import ArgumentParser
 from base64 import urlsafe_b64encode
 from hashlib import sha256
@@ -9,8 +11,6 @@ from secrets import token_urlsafe
 from sys import exit
 from urllib.parse import urlencode
 from webbrowser import open as open_url
-
-import requests
 
 # Latest app version can be found using GET /v1/application-info/android
 USER_AGENT = "PixivAndroidApp/5.0.234 (Android 11; Pixel 5)"
@@ -69,7 +69,7 @@ def login():
 
     response = requests.post(
         AUTH_TOKEN_URL,
-        data={
+        data = {
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
             "code": code,
@@ -78,7 +78,7 @@ def login():
             "include_policy": "true",
             "redirect_uri": REDIRECT_URI,
         },
-        headers={"User-Agent": USER_AGENT},
+        headers = {"User-Agent": USER_AGENT},
     )
 
     print_auth_token_response(response)
@@ -87,14 +87,14 @@ def login():
 def refresh(refresh_token):
     response = requests.post(
         AUTH_TOKEN_URL,
-        data={
+        data = {
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
             "grant_type": "refresh_token",
             "include_policy": "true",
             "refresh_token": refresh_token,
         },
-        headers={"User-Agent": USER_AGENT},
+        headers = {"User-Agent": USER_AGENT},
     )
     print_auth_token_response(response)
     return response.text
@@ -103,12 +103,12 @@ def refresh(refresh_token):
 def main():
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
-    parser.set_defaults(func=lambda _: parser.print_usage())
+    parser.set_defaults(func = lambda _: parser.print_usage())
     login_parser = subparsers.add_parser("login")
-    login_parser.set_defaults(func=lambda _: login())
+    login_parser.set_defaults(func = lambda _: login())
     refresh_parser = subparsers.add_parser("refresh")
     refresh_parser.add_argument("refresh_token")
-    refresh_parser.set_defaults(func=lambda ns: refresh(ns.refresh_token))
+    refresh_parser.set_defaults(func = lambda ns: refresh(ns.refresh_token))
     args = parser.parse_args()
     args.func(args)
 

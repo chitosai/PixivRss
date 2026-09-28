@@ -4,13 +4,14 @@ import requests
 from config import WEIBO_COOKIE_FILE
 from utils.log import debug, log
 
-class Weibo():
+
+class Weibo:
     def __init__(self):
         # load local cookies
         f = open(WEIBO_COOKIE_FILE, 'r')
-        self.originalCookieStr = f.read()
+        self.original_cookie_str = f.read()
         f.close()
-        self.cookies = json.loads(self.originalCookieStr)
+        self.cookies = json.loads(self.original_cookie_str)
 
         # prepare requests, fill in the previous cookies
         self.s = requests.Session()
@@ -35,7 +36,7 @@ class Weibo():
             if data['ok'] != 1:
                 log('Weibo heartbeat refresh faild!')
                 log('--- Sent cookie')
-                log(self.originalCookieStr)
+                log(self.original_cookie_str)
                 log('--- Response:')
                 log(r.text)
                 log('--- Return Cookie:')
@@ -50,6 +51,7 @@ class Weibo():
         except BaseException as err:
             log('heartbeat failed');
             log(str(err));
+
 
 # when invoked from terminal, call heartbeat
 if __name__ == '__main__':
