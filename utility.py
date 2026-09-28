@@ -3,6 +3,7 @@ import re, time, datetime, json, logging
 import requests
 from pixivpy3 import *
 from config import *
+from utils.log import debug, log
 
 
 if DEBUG and DEBUG_SHOW_REQUEST_DETAIL:
@@ -52,41 +53,6 @@ def Get(url):
         return r.text
     else:
         return r.content
-
-
-# 有报错时发一个提醒给我，不然这玩意儿挂了真是注意不到
-def Notify(message):
-    requests.post(PUSHOVER_API, data={
-        'token': PUSHOVER_APP,
-        'user': PUSHOVER_USER,
-        'message': message,
-    })
-
-
-__LOG_LEVEL = 0
-def SetLogLevel(delta):
-    global __LOG_LEVEL
-    __LOG_LEVEL += delta
-
-# DEBUG
-def debug(message):
-    global DEBUG
-    if DEBUG:
-        print(__LOG_LEVEL * '  ' + str(message))
-
-
-def log(pixiv_id, message = None):
-    if message is None:
-        message = pixiv_id
-        pixiv_id = -1
-
-    message = str(message)
-    debug(message)
-    Notify(message)
-    
-    log_content = '%s %s, %s\n' % (time.strftime('[%H:%M:%S] ',time.localtime(time.time())), pixiv_id, message)
-    with open(os.path.join(LOG_PATH, time.strftime('%Y-%m-%d.log', time.localtime(time.time()))), 'a', encoding='utf-8') as f:
-        f.write(log_content)
 
 
 class ExtendedPixivPy(AppPixivAPI):

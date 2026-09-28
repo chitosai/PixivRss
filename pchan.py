@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from utility import *
+from utils.log import SetLogLevel, debug, log
 from make import FetchPixiv
 from weibo import Weibo
 from utils.db import db

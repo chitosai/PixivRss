@@ -1,6 +1,6 @@
 import pymysql
 from config import CONFIG
-from utility import log
+from utils.log import log
 
 
 # 数据库操作

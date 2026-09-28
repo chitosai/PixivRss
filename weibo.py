@@ -1,5 +1,6 @@
 from config import *
 from utility import *
+from utils.log import debug, log
 
 class Weibo():
     def __init__(self):

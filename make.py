@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from utility import *
+from utils.log import debug, log
 
 
 def FetchPixiv(aapi, mode):

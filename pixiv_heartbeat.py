@@ -1,4 +1,5 @@
 from utility import *
+from utils.log import log
 import pixiv_auth
 
 # load current token
