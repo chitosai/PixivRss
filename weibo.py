@@ -1,5 +1,7 @@
-from config import *
-from utility import *
+import json
+import requests
+
+from config import WEIBO_COOKIE_FILE
 from utils.log import debug, log
 
 class Weibo():

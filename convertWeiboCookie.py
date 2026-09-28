@@ -1,5 +1,6 @@
-from utility import *
+import json
 
+from config import OUTPUTED_WEIBO_COOKIE_FILE, WEIBO_COOKIE_FILE
 
 def main():
     f = open(OUTPUTED_WEIBO_COOKIE_FILE, 'r')

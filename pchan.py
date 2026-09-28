@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
-from utility import *
+import json
+import os
+import re
+import time
+
+from config import BLACKLIST, TEMP_PATH, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
+from env import DEBUG
 from utils.log import SetLogLevel, debug, log
-from make import FetchPixiv
+from pixiv.client import PixivClient
 from weibo import Weibo
 from utils.db import db
 
@@ -204,8 +210,8 @@ def get_weibo_nickname(pixiv_uid):
 if __name__ == '__main__':
     global aapi
     # 现在只有daily一个微博了，就不要多余的判断了
-    aapi = ExtendedPixivPy()
-    data = FetchPixiv(aapi, 'daily')
+    aapi = PixivClient()
+    data = aapi.fetch('daily')
 
     # 开始遍历
     count = 0 # 遍历了几次，用这个变量来确保每小时不会发布超过WEIBO_PER_HOUR

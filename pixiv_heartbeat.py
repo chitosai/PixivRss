@@ -1,6 +1,8 @@
-from utility import *
-from utils.log import log
+import json
 import pixiv_auth
+
+from config import TOKEN_FILE
+from utils.log import log
 
 # load current token
 tokens = None
