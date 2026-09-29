@@ -4,27 +4,33 @@ from config import TOKEN_FILE
 from pixiv import auth
 from utils.log import log
 
-# token 保存在 _pixiv.token.json 中，仅由 heartbeat.py 定时 refresh
-# client每次运行时只从 _pixiv.token.json 读取 access_token，不会修改
-tokens = None
-try:
-    f = open(TOKEN_FILE, 'r')
-    tokens = json.load(f)
-    f.close()
-except BaseException as err:
-    log('Heartbeat', 'Failed to load access_token')
-    log(str(err))
 
-new_tokens = None
-try:
-    new_tokens = auth.refresh(tokens['refresh_token'])
-except BaseException as err:
-    log('Heartbeat', 'Error when trying to refresh token')
-    log(str(err))
+# 这个方法负责定时 refresh token 并写入_pixiv.token.json
+# client每次运行时只从 _pixiv.token.json 读取 access_token，不会执行更新
+def main():
+    try:
+        with open(TOKEN_FILE, 'r', encoding = 'utf-8') as f:
+            tokens = json.load(f)
+        refresh_token = tokens['refresh_token']
+    except Exception as err:
+        log('Heartbeat', 'Failed to load token: %s: %s' % (type(err).__name__, err))
+        raise
 
-if new_tokens:
-    f = open(TOKEN_FILE, 'w')
-    f.write(new_tokens)
-    f.close()
-else:
-    log('Heartbeat', 'Failed to refresh token!')
+    try:
+        new_tokens = auth.refresh(refresh_token)
+        if not new_tokens:
+            raise ValueError('Pixiv returned empty token')
+    except (Exception, SystemExit) as err:
+        log('Heartbeat', 'Failed to refresh token: %s: %s' % (type(err).__name__, err))
+        raise
+
+    try:
+        with open(TOKEN_FILE, 'w', encoding = 'utf-8') as f:
+            f.write(new_tokens)
+    except Exception as err:
+        log('Heartbeat', 'Failed to write token: %s: %s' % (type(err).__name__, err))
+        raise
+
+
+if __name__ == '__main__':
+    main()
