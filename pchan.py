@@ -2,8 +2,7 @@
 import json, os, re, time
 
 from PIL import Image
-from config import BLACKLIST, TEMP_PATH, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
-from env import DEBUG
+from config import BLACKLIST, DEBUG, TEMP_PATH, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
 from pixiv.client import PixivClient
 from utility import get
 from utils.db import db
