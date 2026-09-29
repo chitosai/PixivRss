@@ -10,8 +10,9 @@ class PixivClient(AppPixivAPI):
 
     # 实例化的时候自动从本地文件读取token
     def __init__(self):
-        debug('Init ppy class')
-        super(self.__class__, self).__init__(timeout = (10, 30))
+        debug('Init PixivClient')
+        super().__init__(timeout = (10, 30))
+
         # load token
         try:
             with open(TOKEN_FILE, 'r', encoding = 'utf-8') as f:
@@ -30,10 +31,10 @@ class PixivClient(AppPixivAPI):
             log(str(err))
             raise
 
-    # 不知道为什么ppy用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
+    # 不知道为什么PixivPy3用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
     def illust_ranking(self, rank_name):
         ppy_name = MODE[rank_name]['ppyName']
-        return super(self.__class__, self).illust_ranking(ppy_name)
+        return super().illust_ranking(ppy_name)
 
     # 获取排行
     def fetch(self, mode):
@@ -44,14 +45,10 @@ class PixivClient(AppPixivAPI):
             log(json.dumps(r))
             raise RuntimeError()
 
-        # 筛选出我们需要的数据
-        tmp = {
-            'ranking': 0 # 这个ranking直接作为int传入filter会造成无法修改，所以稿一个dict，用修改attr的方式实现
-        }
-
-        def filter(obj):
-            tmp['ranking'] += 1
-            return {
+        # 筛选出我们需要的数据，并提前加上作品排名和大图链接，方便pchan使用
+        data = []
+        for ranking, obj in enumerate(r.illusts, start = 1):
+            data.append({
                 'id': obj.id,
                 'title': obj.title,
                 'author': obj.user.name,
@@ -60,13 +57,16 @@ class PixivClient(AppPixivAPI):
                 'view': obj.total_view,
                 'bookmarks': obj.total_bookmarks,
                 'preview': obj.id if obj.page_count == 1 else '%s-1' % obj.id,
-                'ranking': tmp['ranking'], # 这幅图在榜上排第几，好像暂时只能靠这样自己加
+                'ranking': ranking,  # 这幅图在榜上排第几
                 'images': {
                     'medium': obj.image_urls.medium,
                     'large': obj.image_urls.large,
-                    'original': obj['meta_single_page']['original_image_url'] if ( 'original_image_url' in obj['meta_single_page'] ) else obj['meta_pages'][0]['image_urls']['original']
+                    'original': (
+                        obj['meta_single_page']['original_image_url']
+                        if 'original_image_url' in obj['meta_single_page']
+                        else obj['meta_pages'][0]['image_urls']['original']
+                    )
                 },
                 'tags': obj.tags
-            }
-        data = list(map(filter, r.illusts))
+            })
         return data

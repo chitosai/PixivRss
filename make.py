@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from config import *
+import sys
+
+from config import MODE
 from pixiv.client import PixivClient
 from pixiv.rss import generate_rss
 
