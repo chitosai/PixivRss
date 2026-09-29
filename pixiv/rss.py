@@ -1,4 +1,4 @@
-import datetime, os
+import datetime, html, os, xml.etree.ElementTree as ET
 
 from email.utils import formatdate, format_datetime
 from config import CONFIG, MODE, RSS_PATH
@@ -10,52 +10,44 @@ def generate_rss(mode, data):
     title = MODE[mode]['title']
 
     for total in CONFIG['totals']:
+        rss = ET.Element('rss', version = '2.0')
+        channel = ET.SubElement(rss, 'channel')
+        ET.SubElement(channel, 'title').text = 'Pixiv%s排行 - 前%s' % (title, total)
+        ET.SubElement(channel, 'link').text = 'https://rakuen.thec.me/PixivRss/'
+        ET.SubElement(channel, 'description').text = '就算是排行也要订阅啊混蛋！'
+        ET.SubElement(channel, 'copyright').text = 'Under WTFPL'
+        ET.SubElement(channel, 'language').text = 'zh-CN'
+        ET.SubElement(channel, 'lastBuildDate').text = formatdate(localtime = True)
+        ET.SubElement(channel, 'generator').text = 'PixivRss by TheC'
 
-        rss = u'''<?xml version="1.0" encoding="utf-8" ?>
-        <rss version="2.0">
-        <channel><title>Pixiv%s排行 - 前%s</title>
-    　　<link>https://rakuen.thec.me/PixivRss/</link>
-    　　<description>就算是排行也要订阅啊混蛋！</description>
-    　　<copyright>Under WTFPL</copyright>
-    　　<language>zh-CN</language>
-    　　<lastBuildDate>%s</lastBuildDate>
-    　　<generator>PixivRss by TheC</generator>''' % (title, total, formatdate(localtime = True))
-
-        # 下标不要越界了
-        real_total = min(total, len(data))
-        for i in range(real_total):
-            image = data[i]
-            image_link = 'https://www.pixiv.net/artworks/' + str(image['id'])
+        for image in data[:total]:
+            item = ET.SubElement(channel, 'item')
 
             # Python 3.6 的 %z 不接受 +09:00，去掉冒号后再解析
-            published_at = datetime.datetime.strptime(image['date'].replace(':', ''), '%Y-%m-%dT%H%M%S%z')
+            # 输出的 pub_date 格式为： Sat, 26 Sep 2026 00:00:29 +0900
+            pub_date = datetime.datetime.strptime(image['date'].replace(':', ''), '%Y-%m-%dT%H%M%S%z')
 
-            desc = u'<p>第 %s 位</p>' % image['ranking']
-            desc += u'<p>画师：' + image['author']
-            desc += u' - 上传于：' + published_at.strftime('%Y-%m-%d %H:%M:%S')
-            desc += u' - 阅览数：' + str(image['view'])
-            desc += u' - 收藏数：' + str(image['bookmarks'])
-            desc += u'</p>'
-            desc += u'<p><img src="https://pixiv.cat/%s.jpg"></p>' % image['preview']
+            desc = (
+                '<p>第 %s 位</p>'
+                '<p>画师：%s - 上传于：%s - 阅览数：%s - 收藏数：%s</p>'
+                '<p><img src="https://pixiv.cat/%s.jpg"></p>'
+            ) % (
+                image['ranking'],
+                html.escape(image['author'], quote = True),
+                pub_date.strftime('%Y-%m-%d %H:%M:%S'), # eg. 2026-09-26 00:00:29
+                image['view'],
+                image['bookmarks'],
+                image['preview']
+            )
 
-            rss += u'''<item>
-                    <title><![CDATA[%s]]></title>
-                    <guid isPermaLink="false">%s</guid>
-                    <link>%s</link>
-                    <description><![CDATA[%s]]></description>
-                    <pubDate>%s</pubDate>
-                </item>''' % (
-                                image['title'],
-                                image['id'],
-                                image_link,
-                                desc,
-                                format_datetime(published_at)
-                            )
-
-        rss += u'''</channel></rss>'''
+            ET.SubElement(item, 'title').text = image['title']
+            ET.SubElement(item, 'guid', isPermaLink = 'false').text = str(image['id'])
+            ET.SubElement(item, 'link').text = 'https://www.pixiv.net/artworks/' + str(image['id'])
+            ET.SubElement(item, 'description').text = desc
+            ET.SubElement(item, 'pubDate').text = format_datetime(pub_date)
 
         # 输出到文件
-        with open(os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total)), 'w', encoding = 'utf-8') as f:
-            f.write(rss)
+        path = os.path.join(RSS_PATH, '%s-%s.xml' % (mode, total))
+        ET.ElementTree(rss).write(path, encoding = 'utf-8', xml_declaration = True)
 
     debug('[Processing] RSS file created')
