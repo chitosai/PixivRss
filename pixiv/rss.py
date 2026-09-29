@@ -30,14 +30,15 @@ def generate_rss(mode, data):
             desc = (
                 '<p>第 %s 位</p>'
                 '<p>画师：%s - 上传于：%s - 阅览数：%s - 收藏数：%s</p>'
-                '<p><img src="https://pixiv.cat/%s.jpg"></p>'
+                '<p><img src="https://pixiv.cat/%s.jpg" alt="%s"></p>'
             ) % (
                 image['ranking'],
                 html.escape(image['author'], quote = True),
                 pub_date.strftime('%Y-%m-%d %H:%M:%S'), # eg. 2026-09-26 00:00:29
                 image['view'],
                 image['bookmarks'],
-                image['preview']
+                image['preview'],
+                html.escape(image['title'], quote = True)
             )
 
             ET.SubElement(item, 'title').text = image['title']
