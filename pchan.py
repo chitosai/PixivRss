@@ -7,9 +7,9 @@ from pixiv.client import PixivClient
 from utility import get
 from utils.db import db
 from utils.log import debug, log, set_log_level
-from weibo import Weibo
+from weibo.client import WeiboClient
 
-weibo = Weibo()
+weibo = WeiboClient()
 
 
 def post_weibo(pixiv_id, image, file_path):
