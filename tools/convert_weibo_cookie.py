@@ -1,3 +1,5 @@
+# 从项目根目录以模块方式运行：python3 -m tools.convert_weibo_cookie
+# 以便代码定位到 config.py；不要直接运行 python3 tools/convert_weibo_cookie.py。
 import json
 
 from config import OUTPUTED_WEIBO_COOKIE_FILE, WEIBO_COOKIE_FILE

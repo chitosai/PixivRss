@@ -1,5 +1,5 @@
 /cache/
-/scripts/
+/agent/
 /config.py
 /test.py
 /_pixiv.token.json
