@@ -1,6 +1,7 @@
 import json
 
 from pixivpy3 import AppPixivAPI
+from pixiv import auth
 from config import MODE, TOKEN_FILE
 from utils.log import debug, log
 
@@ -13,22 +14,39 @@ class PixivClient(AppPixivAPI):
         debug('Init PixivClient')
         super().__init__(timeout = (10, 30))
 
-        # load token
         try:
             with open(TOKEN_FILE, 'r', encoding = 'utf-8') as f:
                 tokens = json.load(f)
             if not isinstance(tokens, dict):
                 raise ValueError('Token file does not contain a valid JSON object')
-            for field in ('access_token', 'refresh_token'):
-                value = tokens.get(field)
-                if not isinstance(value, str) or not value.strip():
-                    raise ValueError('Missing or invalid token field: %s' % field)
             self.access_token = tokens['access_token']
             self.refresh_token = tokens['refresh_token']
             debug('Local token loaded')
         except Exception as err:
             log('Failed to load access_token from file')
             log(str(err))
+            raise
+
+    # 这个方法负责定时 refresh token 并写入_pixiv.token.json
+    # client 初始化时只从 _pixiv.token.json 读取 token，调用 heartbeat 才执行更新
+    def heartbeat(self):
+        try:
+            token_response = auth.refresh(self.refresh_token)
+            if not token_response:
+                raise ValueError('Pixiv returned empty token')
+        except (Exception, SystemExit) as err:
+            log('Heartbeat', 'Failed to refresh token: %s: %s' % (type(err).__name__, err))
+            raise
+
+        new_tokens = json.loads(token_response)
+        self.access_token = new_tokens['access_token']
+        self.refresh_token = new_tokens['refresh_token']
+
+        try:
+            with open(TOKEN_FILE, 'w', encoding = 'utf-8') as f:
+                json.dump(new_tokens, f)
+        except Exception as err:
+            log('Heartbeat', 'Failed to write token: %s: %s' % (type(err).__name__, err))
             raise
 
     # 不知道为什么PixivPy3用的ranking name和p站原生的不一致，在illust_ranking里自动转一下
