@@ -2,7 +2,7 @@
 import sys
 
 from config import MODE
-from pixiv.client import PixivClient
+from pixiv.client import pixiv_client
 from pixiv.rss import generate_rss
 
 
@@ -15,6 +15,5 @@ if __name__ == '__main__':
     if mode not in MODE:
         raise RuntimeError('Unknown ranking name')
 
-    client = PixivClient()
-    data = client.fetch(mode)
+    data = pixiv_client.fetch(mode)
     generate_rss(mode, data)

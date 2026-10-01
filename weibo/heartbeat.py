@@ -1,6 +1,5 @@
-from weibo.client import WeiboClient
+from weibo.client import weibo_client
 
 
 if __name__ == '__main__':
-    weibo_client = WeiboClient()
     weibo_client.heartbeat()

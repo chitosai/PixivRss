@@ -57,3 +57,5 @@ class WeiboClient:
 
         debug('Weibo heartbeat refresh succeeded')
         return True
+
+weibo_client = WeiboClient()

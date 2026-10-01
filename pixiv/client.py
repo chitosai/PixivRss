@@ -70,3 +70,5 @@ class PixivClient(AppPixivAPI):
                 'tags': obj.tags
             })
         return data
+
+pixiv_client = PixivClient()
