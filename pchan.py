@@ -4,54 +4,11 @@ import json, os, re, time
 from PIL import Image
 from config import BLACKLIST, DEBUG, TEMP_PATH, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
 from pixiv.client import PixivClient
-from utility import get
 from utils.db import db
 from utils.log import debug, log, set_log_level
 from weibo.client import WeiboClient
 
 weibo = WeiboClient()
-
-
-def post_weibo(pixiv_id, image, file_path):
-    debug('Processing: get WEIBO_NICKNAME')
-
-    # 从pixiv获取作品标签
-    tags = get_first_three_tags(image['tags'])
-
-    # 获取微博昵称
-    weibo_nickname = get_weibo_nickname(image['uid'])
-
-    # 先传图
-    debug('Uploading image to Weibo')
-    pic_id = do_upload_image_to_weibo(file_path)
-    if not pic_id:
-        return False
-
-    # 排行发微博
-    debug('Posting weibo')
-    weibo_text = u'#P站每日排行速报# 第%s位，来自画师 %s 的 %s。Pid: %s。%s %s' \
-                    % (image['ranking'], image['author'], image['title'], str(pixiv_id), tags,
-                     weibo_nickname)
-
-    is_posted = do_post_weibo(pixiv_id, weibo_text, pic_id)
-    if not is_posted:
-        log(pixiv_id, 'Failed to post weibo')
-        return False
-
-    # 成功
-    debug('Post success')
-    # 记录一下
-    db.insert_post_weibo_history(pixiv_id)
-    # 记录用户上榜
-    if weibo_nickname != '':
-        db.award_log(image['uid'])
-
-
-def get_first_three_tags(_tags):
-    # 获取每个作品的前3个tag，拼成#xxx的字符串返回
-    tags = _tags[0:3]
-    tags = map(lambda x : (u'#%s#' % x['name']), tags)
-    return ' '.join(tags)
 
 
 def do_upload_image_to_weibo(filepath):
@@ -154,56 +111,6 @@ def download_image(illust):
         set_log_level(-2)
     return filepath
 
-
-# 根据pixiv_user_id查找微博昵称
-def get_weibo_nickname(pixiv_uid):
-    pixiv_uid = str(pixiv_uid)
-    set_log_level(+1)
-    # 首先从数据库中查找
-    r = db.get_weibo_uid_by(pixiv_uid)
-
-    # 没有
-    if not len(r):
-        user_profile = aapi.user_detail(pixiv_uid)
-        if not user_profile or 'error' in user_profile:
-            log(pixiv_uid, 'Failed to get pixiv user profile')
-            set_log_level(-1)
-            return ''
-        # 从签名里匹配
-        signature = user_profile.user.comment
-        m = re.search('https://(?:www\.)?weibo\.com/(.+?)[\r\n\s]', signature, re.S)
-        if m:
-            weibo_uid = m.group(1)
-            # 保存
-            db.insert_id_map(pixiv_uid, weibo_uid)
-        else:
-            debug('Weibo not found')
-            set_log_level(-1)
-            return ''
-    # 有
-    else:
-        weibo_uid = r[0]['weibo_uid']
-
-
-    debug('Weibo found: %s' % weibo_uid)
-    set_log_level(-1)
-    # 去weibo查昵称
-    weibo_user_page = get('https://weibo.com/' + weibo_uid)
-
-    if not weibo_user_page:
-        log(pixiv_uid, 'Error: failed to open weibo profile page')
-        return ''
-
-    m = re.search(u'Hi， 我是(.+?)！赶快注册微博粉我吧', weibo_user_page)
-    if not m:
-        # pixiv_id: 3892088 && weibo.com/u/1764793942 的情况，不需要登录就能浏览的微博账号
-        m = re.search(u'<title>(.+?)的微博_微博', weibo_user_page)
-
-    if m:
-        return u' @%s' % m.group(1)
-    else:
-        log(pixiv_uid, 'can\'t find WEIBO_NICKNAME - weibo: ' + weibo_uid)
-        return ''
 
 
 if __name__ == '__main__':
