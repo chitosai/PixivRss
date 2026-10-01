@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import json, os, re, time
+import json, mimetypes, os, re, time
 
-from PIL import Image
-from config import BLACKLIST, DEBUG, TEMP_PATH, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
+from config import BLACKLIST, DEBUG, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
 from pixiv.client import PixivClient
 from utils.db import db
 from utils.log import debug, log, set_log_level
@@ -29,7 +28,7 @@ def do_upload_image_to_weibo(filepath):
         # 这里文件必须要用[()]的形式写，这样封装出来的form才是multipart，发出的请求会带上
         # 'Content-Type': 'multipart/form-data; boundary=xxxxxx' 的头
         files = [
-            ('pic', ('1.' + extension, f, 'image/' + extension))
+            ('pic', ('1.' + extension, f, mimetypes.guess_type(filename)[0] or 'application/octet-stream'))
         ]
         weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
         weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
@@ -84,34 +83,6 @@ def do_post_weibo(pixiv_id, message, pic_id):
         return False
 
 
-# 下载原图
-def download_image(illust):
-    debug('Download image')
-    filename = '%s.jpg' % illust['id']
-    filepath = os.path.join(TEMP_PATH, filename)
-    # 原本似乎是抓original尺寸的，但是还是不要发原图了吧，现在自己模拟m.weibo的请求怕一张2m/3m/4m的图太大了容易出问题
-    # 还是试试看original先吧。。可以的话还是传清晰的图好
-    picpath = illust['images']['original'] or illust['images']['large'] or illust['images']['medium']
-    if not picpath:
-        log('Image url not found!')
-        log(json.dumps(illust))
-        raise RuntimeError()
-    aapi.download(picpath, path = TEMP_PATH, name = filename)
-    debug('Download finished, saved to %s' % filepath)
-    # 自己拯救一下试试，检查文件尺寸，如果超过2M就用Pillow压缩一遍
-    original_size = os.path.getsize(filepath)
-    if original_size > 2000000:
-        set_log_level(+2)
-        debug('%s: File size %s, will run a compress' % (illust['id'], original_size))
-        image = Image.open(filepath)
-        # 直接覆盖原图，抛弃Alpha通道，优化文件尺寸，质量85
-        image = image.convert('RGB')
-        image.save(filepath, 'JPEG', optimize = True, quality = 85)
-        debug('%s: Compressed size: %s' % (illust['id'], os.path.getsize(filepath)))
-        set_log_level(-2)
-    return filepath
-
-
 
 if __name__ == '__main__':
     global aapi
@@ -137,7 +108,7 @@ if __name__ == '__main__':
             set_log_level(-2)
             continue
         # 下载medium尺寸图到本地
-        filepath = download_image(illust)
+        filepath = aapi.download_image(illust)
         # 上传
         post_weibo(pixiv_id, illust, filepath)
         count += 1

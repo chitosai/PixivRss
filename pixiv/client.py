@@ -1,9 +1,11 @@
 import json
 
+from pathlib import Path
+from urllib.parse import urlparse
 from pixivpy3 import AppPixivAPI
 from pixiv import auth
-from config import MODE, TOKEN_FILE
-from utils.log import debug, log
+from config import MODE, TEMP_PATH, TOKEN_FILE
+from utils.log import debug, log, set_log_level
 
 
 class PixivClient(AppPixivAPI):
@@ -88,6 +90,44 @@ class PixivClient(AppPixivAPI):
                 'tags': obj.tags
             })
         return data
+    
+    # 下载 Pixiv 原图
+    def download_image(self, illust):
+        debug('Download image')
+        pixiv_image_url = illust['images']['original'] or illust['images']['large'] or illust['images']['medium']
+
+        if not pixiv_image_url:
+            log('Image url not found!')
+            log(json.dumps(illust))
+            raise RuntimeError()
+        
+        extension = Path(urlparse(pixiv_image_url).path).suffix or '.jpg'
+        local_image = Path(TEMP_PATH) / ('%s%s' % (illust['id'], extension))
+        self.download(pixiv_image_url, path = str(local_image.parent), name = local_image.name, replace = True)
+        debug('Download finished, saved to %s' % local_image)
+
+        # 检查文件尺寸，如果超过 2M 就用 Pillow 压缩一遍
+        original_size = local_image.stat().st_size
+        if original_size > 2000000:
+            from PIL import Image
+
+            set_log_level(+2)
+            try:
+                debug('%s: File size %s, will run a compress' % (illust['id'], original_size))
+                with Image.open(local_image) as image:
+                    # 抛弃 Alpha 通道，优化文件尺寸，质量 80
+                    with image.convert('RGB') as compressed_image:
+                        output_path = local_image.with_suffix('.jpg')
+                        compressed_image.save(output_path, 'JPEG', optimize = True, quality = 80)
+                # 如果压缩后文件名和原文件名不一样 (.jpg/.png)，就删除原文件，避免占用空间
+                if output_path != local_image:
+                    local_image.unlink()
+                local_image = output_path
+                debug('%s: Compressed size: %s' % (illust['id'], local_image.stat().st_size))
+            finally:
+                set_log_level(-2)
+
+        return str(local_image)
 
 
 pixiv_client = PixivClient()
