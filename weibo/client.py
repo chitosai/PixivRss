@@ -3,7 +3,6 @@ import requests
 
 from config import DEBUG, WEIBO_COOKIE_FILE
 from pathlib import Path
-from utils.db import db
 from utils.log import _write_log, debug, log, set_log_level
 
 
@@ -97,6 +96,8 @@ class WeiboClient:
     
     # 根据 pixiv_user_id 查找微博昵称
     def get_weibo_nickname(self, pixiv_uid):
+        from utils.db import db
+
         pixiv_uid = str(pixiv_uid)
         set_log_level(+1)
 
@@ -115,7 +116,7 @@ class WeiboClient:
             
             # 从签名里匹配
             signature = user_profile.user.comment
-            match = re.search(r'https://(?:www\.)?weibo\.com/(.+?)[\r\n\s]', signature, re.S)
+            match = re.search(r'https://(?:www\.)?weibo\.com/((?:u/)?[A-Za-z0-9_]+)', signature)
             if match:
                 weibo_uid = match.group(1)
                 # 保存
@@ -219,6 +220,8 @@ class WeiboClient:
             return False
 
     def post(self, pixiv_id, image, file_path):
+        from utils.db import db
+
         # 获取每个作品的前3个tag，拼成 #xxx 的字符串
         tags_string = ' '.join(f"#{tag['name']}#" for tag in image['tags'][:3])
 
