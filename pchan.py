@@ -5,42 +5,9 @@ from config import BLACKLIST, DEBUG, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
 from pixiv.client import PixivClient
 from utils.db import db
 from utils.log import debug, log, set_log_level
-from weibo.client import WeiboClient
-
-weibo = WeiboClient()
+from weibo.client import weibo_client
 
 
-def do_post_weibo(pixiv_id, message, pic_id):
-    global weibo
-    try:
-        data = {
-            'content': message,
-            'visible': (1 if DEBUG else 0),                       # 0 = 全部可见，1 = 仅自己可见，10 = 粉丝
-            '_spr': 'screen:1920x1080',
-            'st': weibo.cookies['XSRF-TOKEN'],
-            'picId': pic_id                     # 这是提前上传的图片的id
-        }
-        weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
-        weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
-        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/update', data = data, timeout = 60)
-        debug('post weibo returns:')
-        debug(r2.text)
-        data = r2.json()
-        if data['ok'] == 1:
-            return True
-        else:
-            log(pixiv_id, 'post weibo failed')
-            set_log_level(+2)
-            log(pixiv_id, 'Payload sent:')
-            log(pixiv_id, json.dumps(data))
-            log(pixiv_id, 'Return:')
-            log(pixiv_id, r2.text)
-            set_log_level(-2)
-            return False
-    except Exception as err:
-        log(pixiv_id, 'Weibo post failed with error')
-        log(pixiv_id, err)
-        return False
 
 
 
@@ -70,7 +37,7 @@ if __name__ == '__main__':
         # 下载medium尺寸图到本地
         filepath = aapi.download_image(illust)
         # 上传
-        post_weibo(pixiv_id, illust, filepath)
+        weibo_client.post(pixiv_id, illust, filepath)
         count += 1
         if count >= WEIBO_PER_HOUR or ( DEBUG and count >= WEIBO_PER_HOUR_DEBUG ):
             set_log_level(-2)

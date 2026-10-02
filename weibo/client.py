@@ -1,9 +1,9 @@
 import json, mimetypes, re
 import requests
 
-from config import WEIBO_COOKIE_FILE
+from config import DEBUG, WEIBO_COOKIE_FILE
 from pathlib import Path
-from utils import db
+from utils.db import db
 from utils.log import _write_log, debug, log, set_log_level
 
 
@@ -19,20 +19,24 @@ class WeiboClient:
         # 拼接请求头，xsrf-token 需要从 cookie 中获取
         self.session.headers.update({
             'accept-language': 'zh-CN,zh;q=0.8', # 防止海外服务器访问 weibo 变英文版
-            'mweibo-pwa': "1",
+            'mweibo-pwa': '1',
             'origin': 'https://m.weibo.cn',
             'referer': 'https://m.weibo.cn/sw.js',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.1.128 Safari/537.36',
             'x-xsrf-token': self.cookies['XSRF-TOKEN']
         })
 
-    def save_cookies(self):
+    def update_cookies(self, write_file = False):
         self.cookies = self.session.cookies.get_dict()
         # 本地字典不保留域信息，统一回填以免新旧同名 cookie 重复发送
         self.session.cookies.clear()
         self.session.cookies.update(self.cookies)
         # 立即更新 session 中的 xsrf-token，这样如果当前 session 还需要继续发送请求不会过期
         self.session.headers['x-xsrf-token'] = self.cookies['XSRF-TOKEN']
+
+        # 默认只同步内存，heartbeat 才写回文件
+        if not write_file:
+            return
 
         # 保存更新的 cookie
         try:
@@ -62,7 +66,7 @@ class WeiboClient:
             log('Weibo heartbeat request failed: %s' % type(err).__name__)
             raise
 
-        self.save_cookies()
+        self.update_cookies(write_file = True)
         debug('Weibo heartbeat refresh succeeded')
         return True
 
@@ -87,7 +91,7 @@ class WeiboClient:
             log(weibo_uid, f'Weibo user profile request failed: {type(err).__name__}')
             return None
 
-        self.save_cookies()
+        self.update_cookies()
         return user_info
 
     
@@ -101,7 +105,9 @@ class WeiboClient:
 
         # 没有
         if not mappings:
-            user_profile = self.user_detail(pixiv_uid)
+            from pixiv.client import pixiv_client
+
+            user_profile = pixiv_client.user_detail(pixiv_uid)
             if not user_profile or 'error' in user_profile:
                 log(pixiv_uid, 'Failed to get pixiv user profile')
                 set_log_level(-1)
@@ -126,7 +132,7 @@ class WeiboClient:
         set_log_level(-1)
         
         # 去 m.weibo.cn，获取用户信息
-        user_info = weibo_client.get_user_info(weibo_uid)
+        user_info = self.get_user_info(weibo_uid)
 
         if not user_info:
             log(pixiv_uid, 'Error: failed to open weibo profile page')
@@ -171,11 +177,45 @@ class WeiboClient:
                 log(pixiv_id, response.text)
                 return False
 
-            self.save_cookies()
+            self.update_cookies()
             local_image.unlink()
             return pic_id
         except Exception as err:
             log(pixiv_id, f'Weibo image upload failed: {type(err).__name__}: {err}')
+            return False
+
+    def do_post_weibo(self, pixiv_id, message, pic_id):
+        try:
+            data = {
+                'content': message,
+                'visible': 1, #(1 if DEBUG else 0),   # 0 = 全部可见，1 = 仅自己可见，10 = 粉丝
+                '_spr': 'screen:1920x1080',
+                'st': self.cookies['XSRF-TOKEN'],
+                'picId': pic_id                   # 这是提前上传的图片的id
+            }
+            response = self.session.post(
+                'https://m.weibo.cn/api/statuses/update',
+                data = data,
+                headers = {'referer': 'https://m.weibo.cn/compose/'},
+                timeout = 60
+            )
+            response.raise_for_status()
+            debug('post weibo returns:')
+            debug(response.text)
+            if response.json().get('ok') != 1:
+                log(pixiv_id, 'post weibo failed')
+                _write_log(
+                    pixiv_id,
+                    f'Payload sent:\n{json.dumps(data, ensure_ascii = False)}\n'
+                    f'Return:\n{response.text}'
+                )
+                return False
+            self.update_cookies()
+            return True
+        except Exception as err:
+            log(pixiv_id, f'Weibo post failed: {type(err).__name__}: {err}')
+            if isinstance(err, requests.HTTPError) and err.response is not None:
+                _write_log(pixiv_id, f'Weibo post api returned:\n{err.response.text}')
             return False
 
     def post(self, pixiv_id, image, file_path):
@@ -194,11 +234,12 @@ class WeiboClient:
 
         # 排行发微博
         debug('Posting weibo')
-        weibo_text = u'#P站每日排行速报# 第%s位，来自画师 %s 的 %s。Pid: %s。%s %s' \
-                        % (image['ranking'], image['author'], image['title'], str(pixiv_id), tags_string,
-                        weibo_nickname)
+        weibo_text = (
+            f"#P站每日排行速报# 第{image['ranking']}位，来自画师 {image['author']} 的 "
+            f"{image['title']}。Pid: {pixiv_id}。{tags_string} {weibo_nickname}"
+        )
 
-        is_posted = do_post_weibo(pixiv_id, weibo_text, pic_id)
+        is_posted = self.do_post_weibo(pixiv_id, weibo_text, pic_id)
         if not is_posted:
             log(pixiv_id, 'Failed to post weibo')
             return False
@@ -210,6 +251,8 @@ class WeiboClient:
         # 记录用户上榜
         if weibo_nickname != '':
             db.award_log(image['uid'])
+
+        return True
 
 
 weibo_client = WeiboClient()
