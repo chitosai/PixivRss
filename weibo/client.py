@@ -1,8 +1,8 @@
-import json
-import re
+import json, mimetypes, re
 import requests
 
 from config import WEIBO_COOKIE_FILE
+from pathlib import Path
 from utils import db
 from utils.log import _write_log, debug, log, set_log_level
 
@@ -139,45 +139,45 @@ class WeiboClient:
         log(pixiv_uid, f"can't find WEIBO_NICKNAME - weibo: {weibo_uid}")
         return ''
 
-    def do_upload_image_to_weibo(filepath):
-        global weibo
-        filename = os.path.basename(filepath)
-        pixiv_id = filename.split('.')[0]
-        extension = filename.split('.')[1]
-        # 准备返回值，默认为False，上传完毕修改为图片url
-        r = False
-        # upload
+    # 把图片上传到微博，成功返回图片id，同时删除本地文件，失败返回 False
+    def upload_image_to_weibo(self, filepath):
+        local_image = Path(filepath)
+        pixiv_id = local_image.stem
+
         try:
-            f = open(filepath, 'rb')
             data = {
                 'type': 'json',
                 '_spr': 'screen:1920x1080',
-                'st': weibo.cookies['XSRF-TOKEN']
+                'st': self.cookies['XSRF-TOKEN']
             }
-            # 这里文件必须要用[()]的形式写，这样封装出来的form才是multipart，发出的请求会带上
-            # 'Content-Type': 'multipart/form-data; boundary=xxxxxx' 的头
-            files = [
-                ('pic', ('1.' + extension, f, mimetypes.guess_type(filename)[0] or 'application/octet-stream'))
-            ]
-            weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
-            weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
-            r2 = weibo.s.post('https://m.weibo.cn/api/statuses/uploadPic', data = data, files = files, timeout = 60)
+            with local_image.open('rb') as file:
+                # 这个接口要求 multipart type，eg. 'Content-Type': 'multipart/form-data; boundary=xxxxxx'
+                files = {
+                    'pic': (local_image.name, file, mimetypes.guess_type(local_image.name)[0] or 'application/octet-stream')
+                }
+                response = self.session.post(
+                    'https://m.weibo.cn/api/statuses/uploadPic',
+                    data = data,
+                    files = files,
+                    headers = {'referer': 'https://m.weibo.cn/compose/'},
+                    timeout = 60
+                )
+            response.raise_for_status()
             debug('upload image to weibo returns: ')
-            debug(r2.text)
-            data = r2.json()
-            if 'pic_id' in data:
-                r = data['pic_id']
-            else:
-                log(pixiv_id, 'post weibo failed')
-                log(pixiv_id, r2.text)
+            debug(response.text)
+            pic_id = response.json().get('pic_id')
+            if not pic_id:
+                log(pixiv_id, 'Weibo image upload failed')
+                log(pixiv_id, response.text)
+                return False
+
+            self.save_cookies()
+            local_image.unlink()
+            return pic_id
         except Exception as err:
-            log(pixiv_id, 'Weibo post failed with error')
-            log(pixiv_id, err)
-        finally:
-            f.close()
-            os.remove(filepath)
-            return r
-    
+            log(pixiv_id, f'Weibo image upload failed: {type(err).__name__}: {err}')
+            return False
+
     def post(self, pixiv_id, image, file_path):
         # 获取每个作品的前3个tag，拼成 #xxx 的字符串
         tags_string = ' '.join(f"#{tag['name']}#" for tag in image['tags'][:3])
@@ -188,7 +188,7 @@ class WeiboClient:
 
         # 先传图
         debug('Uploading image to Weibo')
-        pic_id = do_upload_image_to_weibo(file_path)
+        pic_id = self.upload_image_to_weibo(file_path)
         if not pic_id:
             return False
 
