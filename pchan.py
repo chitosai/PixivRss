@@ -10,46 +10,6 @@ from weibo.client import WeiboClient
 weibo = WeiboClient()
 
 
-def do_upload_image_to_weibo(filepath):
-    global weibo
-    filename = os.path.basename(filepath)
-    pixiv_id = filename.split('.')[0]
-    extension = filename.split('.')[1]
-    # 准备返回值，默认为False，上传完毕修改为图片url
-    r = False
-    # upload
-    try:
-        f = open(filepath, 'rb')
-        data = {
-            'type': 'json',
-            '_spr': 'screen:1920x1080',
-            'st': weibo.cookies['XSRF-TOKEN']
-        }
-        # 这里文件必须要用[()]的形式写，这样封装出来的form才是multipart，发出的请求会带上
-        # 'Content-Type': 'multipart/form-data; boundary=xxxxxx' 的头
-        files = [
-            ('pic', ('1.' + extension, f, mimetypes.guess_type(filename)[0] or 'application/octet-stream'))
-        ]
-        weibo.s.headers['x-xsrf-token'] = weibo.cookies['XSRF-TOKEN']
-        weibo.s.headers['referer'] = 'https://m.weibo.cn/compose/'
-        r2 = weibo.s.post('https://m.weibo.cn/api/statuses/uploadPic', data = data, files = files, timeout = 60)
-        debug('upload image to weibo returns: ')
-        debug(r2.text)
-        data = r2.json()
-        if 'pic_id' in data:
-            r = data['pic_id']
-        else:
-            log(pixiv_id, 'post weibo failed')
-            log(pixiv_id, r2.text)
-    except Exception as err:
-        log(pixiv_id, 'Weibo post failed with error')
-        log(pixiv_id, err)
-    finally:
-        f.close()
-        os.remove(filepath)
-        return r
-
-
 def do_post_weibo(pixiv_id, message, pic_id):
     global weibo
     try:
