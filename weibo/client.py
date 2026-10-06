@@ -3,6 +3,7 @@ import requests
 
 from config import DEBUG, WEIBO_COOKIE_FILE
 from pathlib import Path
+from utils.http import configure_retries
 from utils.log import _write_log, debug, log, set_log_level
 
 
@@ -13,6 +14,7 @@ class WeiboClient:
             self.cookies = json.load(file)
 
         self.session = requests.Session()
+        configure_retries(self.session)
         self.session.cookies.update(self.cookies)
 
         # 拼接请求头，xsrf-token 需要从 cookie 中获取

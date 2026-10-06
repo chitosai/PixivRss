@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from pixivpy3 import AppPixivAPI
 from pixiv import auth
 from config import MODE, TEMP_PATH, TOKEN_FILE
+from utils.http import configure_retries
 from utils.log import debug, log, set_log_level
 
 
@@ -15,6 +16,7 @@ class PixivClient(AppPixivAPI):
     def __init__(self):
         debug('Init PixivClient')
         super().__init__(timeout = (10, 30))
+        configure_retries(self.requests)
 
         try:
             with open(TOKEN_FILE, 'r', encoding = 'utf-8') as f:
