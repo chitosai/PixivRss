@@ -191,7 +191,7 @@ class WeiboClient:
         try:
             data = {
                 'content': message,
-                'visible': 1, #(1 if DEBUG else 0),   # 0 = 全部可见，1 = 仅自己可见，10 = 粉丝
+                'visible': (1 if DEBUG else 0),   # 0 = 全部可见，1 = 仅自己可见，10 = 粉丝
                 '_spr': 'screen:1920x1080',
                 'st': self.cookies['XSRF-TOKEN'],
                 'picId': pic_id                   # 这是提前上传的图片的id
