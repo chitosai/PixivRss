@@ -2,11 +2,11 @@
 import time
 
 from config import BLACKLIST, DEBUG, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
-from PIL import Image, ImageFilter
+from pathlib import Path
 from pixiv.client import pixiv_client
 from utils.db import db
-from utils.log import debug, set_log_level
-from utils.moderator import moderate
+from utils.log import debug, log, set_log_level
+from utils.moderator import blur_image, moderate
 from weibo.client import weibo_client
 
 
@@ -27,25 +27,32 @@ def main():
             if illust['uid'] in BLACKLIST:
                 debug(f"Author {illust['uid']} in Blacklist, will skip")
                 continue
+
             # 检查有没有发过
             if db.check_if_posted(pixiv_id):
                 debug('Posted, will skip')
                 continue
-            # 下载原图到本地
+
+            # 下载原图到本地，原图 >2M 会在这个方法里直接压缩
             local_image = pixiv_client.download_image(illust)
-            # 跑一下AI审核，发现色色就打一个薄码
+
+            # 跑一下AI审核，发现色色就自己打一个薄码，免得被微博扣分
             moderation = moderate(pixiv_id, local_image)
             if moderation and moderation['categories']['sexual'] is True:
-                debug('Sexual content detected, applying Gaussian blur (radius 10)')
-                with Image.open(local_image) as image:
-                    # 调色板 PNG 需要先转换颜色模式，透明图片保留 Alpha 通道
-                    mode = 'RGBA' if 'A' in image.getbands() or 'transparency' in image.info else 'RGB'
-                    with image.convert(mode) as source_image:
-                        with source_image.filter(ImageFilter.GaussianBlur(radius = 10)) as blurred_image:
-                            blurred_image.save(local_image)
-            # 上传
-            if weibo_client.post(pixiv_id, illust, local_image):
-                posted_count += 1
+                local_image = blur_image(local_image)
+
+            # 上传处理好的图片到微博图床
+            debug('Uploading image to Weibo')
+            pic_id = weibo_client.upload_image_to_weibo(local_image)
+            if pic_id:
+                # 上传成功后删除本地文件，失败则保留
+                try:
+                    Path(local_image).unlink()
+                except Exception as err:
+                    log(pixiv_id, f'Temporary image deletion failed: {type(err).__name__}: {err}')
+                else:
+                    if weibo_client.post(pixiv_id, illust, pic_id):
+                        posted_count += 1
         finally:
             set_log_level(-2)
 

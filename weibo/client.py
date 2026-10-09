@@ -148,7 +148,7 @@ class WeiboClient:
         log(pixiv_uid, f"can't find WEIBO_NICKNAME - weibo: {weibo_uid}")
         return ''
 
-    # 把图片上传到微博，成功返回图片id，同时删除本地文件，失败返回 False
+    # 把图片上传到微博，成功返回图片id，失败返回 False
     def upload_image_to_weibo(self, filepath):
         local_image = Path(filepath)
         pixiv_id = local_image.stem
@@ -181,7 +181,6 @@ class WeiboClient:
                 return False
 
             self.update_cookies()
-            local_image.unlink()
             return pic_id
         except Exception as err:
             log(pixiv_id, f'Weibo image upload failed: {type(err).__name__}: {err}')
@@ -221,7 +220,7 @@ class WeiboClient:
                 _write_log(pixiv_id, f'Weibo post api returned:\n{err.response.text}')
             return False
 
-    def post(self, pixiv_id, image, file_path):
+    def post(self, pixiv_id, image, pic_id):
         from utils.db import db
 
         # 获取每个作品的前3个tag，拼成 #xxx 的字符串
@@ -230,12 +229,6 @@ class WeiboClient:
         # 获取微博昵称
         debug('Processing: get WEIBO_NICKNAME')
         weibo_nickname = self.get_weibo_nickname(image['uid'])
-
-        # 先传图
-        debug('Uploading image to Weibo')
-        pic_id = self.upload_image_to_weibo(file_path)
-        if not pic_id:
-            return False
 
         # 排行发微博
         debug('Posting weibo')
