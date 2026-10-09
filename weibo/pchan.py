@@ -2,9 +2,11 @@
 import time
 
 from config import BLACKLIST, DEBUG, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
+from PIL import Image, ImageFilter
 from pixiv.client import pixiv_client
 from utils.db import db
 from utils.log import debug, set_log_level
+from utils.moderator import moderate
 from weibo.client import weibo_client
 
 
@@ -31,6 +33,16 @@ def main():
                 continue
             # 下载原图到本地
             local_image = pixiv_client.download_image(illust)
+            # 跑一下AI审核，发现色色就打一个薄码
+            moderation = moderate(pixiv_id, local_image)
+            if moderation and moderation['categories']['sexual'] is True:
+                debug('Sexual content detected, applying Gaussian blur (radius 10)')
+                with Image.open(local_image) as image:
+                    # 调色板 PNG 需要先转换颜色模式，透明图片保留 Alpha 通道
+                    mode = 'RGBA' if 'A' in image.getbands() or 'transparency' in image.info else 'RGB'
+                    with image.convert(mode) as source_image:
+                        with source_image.filter(ImageFilter.GaussianBlur(radius = 10)) as blurred_image:
+                            blurred_image.save(local_image)
             # 上传
             if weibo_client.post(pixiv_id, illust, local_image):
                 posted_count += 1
