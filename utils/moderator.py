@@ -1,7 +1,9 @@
-import base64, mimetypes, socket
+import base64, json, mimetypes, socket
 import requests
 
-from config import OPENAI_API_KEY
+from config import LOG_PATH, OPENAI_API_KEY
+from datetime import datetime
+from pathlib import Path
 from PIL import Image, ImageFilter
 from urllib3.exceptions import ConnectTimeoutError, NewConnectionError, ProtocolError, ProxyError, ReadTimeoutError
 from urllib3.util import Retry
@@ -37,13 +39,39 @@ def moderate(pixiv_id, filepath):
             timeout = (10, 30),
         )
         response.raise_for_status()
-        return response.json()['results'][0]
+        result = response.json()['results'][0]
     except Exception as err:
         try:
             log(pixiv_id, 'Image moderation failed for %s: %s: %s' % (filepath, type(err).__name__, err))
         except OSError:
             pass
         return None
+
+    try:
+        _save_result(pixiv_id, result)
+    except Exception as err:
+        try:
+            log(pixiv_id, 'Image moderation result save failed: %s: %s' % (type(err).__name__, err))
+        except OSError:
+            pass
+    return result
+
+
+def _save_result(pixiv_id, result):
+    filepath = Path(LOG_PATH) / 'moderator.json'
+    records = {}
+    if filepath.exists():
+        with filepath.open('r', encoding = 'utf-8') as file:
+            records = json.load(file)
+
+    records[str(pixiv_id)] = {
+        'flagged': result['flagged'],
+        'categories': result['categories'],
+        'category_scores': result['category_scores'],
+        'completed_at': datetime.now().astimezone().isoformat(timespec = 'seconds'),
+    }
+    with filepath.open('w', encoding = 'utf-8') as file:
+        json.dump(records, file, ensure_ascii = False, indent = 2)
 
 
 # 用 Pillow 的高斯模糊来给图片打码，默认 radius = 10
