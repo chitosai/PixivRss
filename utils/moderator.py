@@ -47,12 +47,13 @@ def moderate(pixiv_id, filepath):
 
 
 # 用 Pillow 的高斯模糊来给图片打码，默认 radius = 10
-def blur_image(filepath, radius = 10):
-    debug('Sexual content detected, applying Gaussian blur (radius %d)' % radius)
+def blur_image(pixiv_id, filepath, radius = 10):
     with Image.open(filepath) as image:
         # 调色板 PNG 需要先转换颜色模式，透明图片保留 Alpha 通道
         mode = 'RGBA' if 'A' in image.getbands() or 'transparency' in image.info else 'RGB'
         with image.convert(mode) as source_image:
             with source_image.filter(ImageFilter.GaussianBlur(radius = radius)) as blurred_image:
                 blurred_image.save(filepath)
+                
+    log(pixiv_id, 'Sexual content detected, applying Gaussian blur (radius %d)' % radius)
     return filepath
