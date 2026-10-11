@@ -2,7 +2,7 @@ import base64, json, mimetypes, socket
 import requests
 
 from config import LOG_PATH, OPENAI_API_KEY
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from PIL import Image, ImageFilter
 from urllib3.exceptions import ConnectTimeoutError, NewConnectionError, ProtocolError, ProxyError, ReadTimeoutError
@@ -57,6 +57,7 @@ def moderate(pixiv_id, filepath):
     return result
 
 
+# 将 OpenAI API 返回的审核结果保存到日志文件中，方便回头分析合适的阈值
 def _save_result(pixiv_id, result):
     filepath = Path(LOG_PATH) / 'moderator.json'
     records = {}
@@ -64,17 +65,27 @@ def _save_result(pixiv_id, result):
         with filepath.open('r', encoding = 'utf-8') as file:
             records = json.load(file)
 
+    # 每次更新 moderator.json 时都顺带清除 15 天以前的审核记录，避免文件积累过大
+    completed_at = datetime.now().astimezone().replace(microsecond = 0)
+    threshold = (completed_at - timedelta(days = 15)).isoformat(timespec = 'seconds')
+    records = {
+        record_id: record
+        for record_id, record in records.items()
+        if record['completed_at'] >= threshold
+    }
+
+    # 添加当前作品的结果
     records[str(pixiv_id)] = {
         'flagged': result['flagged'],
         'categories': result['categories'],
         'category_scores': result['category_scores'],
-        'completed_at': datetime.now().astimezone().isoformat(timespec = 'seconds'),
+        'completed_at': completed_at.isoformat(timespec = 'seconds'),
     }
     with filepath.open('w', encoding = 'utf-8') as file:
         json.dump(records, file, ensure_ascii = False, indent = 2)
 
 
-# 用 Pillow 的高斯模糊来给图片打码，默认 radius = 10
+# 用 Pillow 的高斯模糊来给图片打码
 def blur_image(pixiv_id, filepath, radius = 10):
     with Image.open(filepath) as image:
         # 调色板 PNG 需要先转换颜色模式，透明图片保留 Alpha 通道
