@@ -1,7 +1,7 @@
 import base64, json, mimetypes, socket
 import requests
 
-from config import LOG_PATH, OPENAI_API_KEY
+from config import ABS_PATH, LOG_PATH, OPENAI_API_KEY
 from datetime import datetime, timedelta
 from pathlib import Path
 from PIL import Image, ImageFilter
@@ -85,14 +85,24 @@ def _save_result(pixiv_id, result):
         json.dump(records, file, ensure_ascii = False, indent = 2)
 
 
-# 用 Pillow 的高斯模糊来给图片打码
-def blur_image(pixiv_id, filepath, radius = 10):
+# 用 Pillow 的高斯模糊来给图片打码，再往上叠一个提示
+def blur_image(pixiv_id, filepath, radius = 20):
     with Image.open(filepath) as image:
         # 调色板 PNG 需要先转换颜色模式，透明图片保留 Alpha 通道
         mode = 'RGBA' if 'A' in image.getbands() or 'transparency' in image.info else 'RGB'
-        with image.convert(mode) as source_image:
+        with image.convert('RGBA') as source_image:
             with source_image.filter(ImageFilter.GaussianBlur(radius = radius)) as blurred_image:
-                blurred_image.save(filepath)
-                
+                # 横图按高度 1/9，竖图和方图按 1/10；包含素材透明留白，保持宽高比并居中
+                with Image.open(Path(ABS_PATH) / '18x_blur_cover.png') as cover, cover.convert('RGBA') as overlay:
+                    cover_height = max(1, round(image.height / (9 if image.width > image.height else 10)))
+                    cover_width = max(1, round(cover.width * cover_height / cover.height))
+                    position = ((image.width - cover_width) // 2, (image.height - cover_height) // 2)
+                    with overlay.resize((cover_width, cover_height), Image.LANCZOS) as resized:
+                        blurred_image.alpha_composite(resized, dest = position)
+
+                # 合成用 RGBA，保存时保留原图透明属性，JPEG 等不透明图片转回 RGB
+                with blurred_image.convert(mode) as output_image:
+                    output_image.save(filepath)
+
     log(pixiv_id, 'Sexual content detected, applying Gaussian blur (radius %d)' % radius)
     return filepath
