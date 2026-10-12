@@ -97,7 +97,7 @@ class WeiboClient:
 
     
     # 根据 pixiv_user_id 查找微博昵称
-    def get_weibo_nickname(self, pixiv_uid):
+    def get_weibo_nickname(self, pixiv_id, pixiv_uid):
         from utils.db import db
 
         pixiv_uid = str(pixiv_uid)
@@ -112,7 +112,7 @@ class WeiboClient:
 
             user_profile = pixiv_client.user_detail(pixiv_uid)
             if not user_profile or 'error' in user_profile:
-                log(pixiv_uid, 'Failed to get pixiv user profile')
+                log(pixiv_id, 'Failed to get pixiv user profile, pixiv_uid: %s' % pixiv_uid)
                 set_log_level(-1)
                 return ''
             
@@ -138,14 +138,14 @@ class WeiboClient:
         user_info = self.get_user_info(weibo_uid)
 
         if not user_info:
-            log(pixiv_uid, 'Error: failed to open weibo profile page')
+            log(pixiv_id, 'Error: failed to open weibo profile page, weibo_uid: %s' % weibo_uid)
             return ''
 
         nickname = user_info.get('screen_name')
         if nickname:
             return f' @{nickname}'
 
-        log(pixiv_uid, f"can't find WEIBO_NICKNAME - weibo: {weibo_uid}")
+        log(pixiv_id, f"can't find WEIBO_NICKNAME, weibo_uid: {weibo_uid}")
         return ''
 
     # 把图片上传到微博，成功返回图片id，失败返回 False
@@ -228,7 +228,7 @@ class WeiboClient:
 
         # 获取微博昵称
         debug('Processing: get WEIBO_NICKNAME')
-        weibo_nickname = self.get_weibo_nickname(image['uid'])
+        weibo_nickname = self.get_weibo_nickname(pixiv_id, image['uid'])
 
         # 排行发微博
         debug('Posting weibo')
