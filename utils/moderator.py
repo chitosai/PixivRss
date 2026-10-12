@@ -1,7 +1,7 @@
 import base64, json, mimetypes, socket
 import requests
 
-from config import ABS_PATH, LOG_PATH, OPENAI_API_KEY
+from config import ABS_PATH, DEFAULT_BLUR_RADIUS, LOG_PATH, OPENAI_API_KEY
 from datetime import datetime, timedelta
 from pathlib import Path
 from PIL import Image, ImageFilter
@@ -86,7 +86,7 @@ def _save_result(pixiv_id, result):
 
 
 # 用 Pillow 的高斯模糊来给图片打码，再往上叠一个提示
-def blur_image(pixiv_id, filepath, radius = 20):
+def blur_image(pixiv_id, filepath, radius = DEFAULT_BLUR_RADIUS):
     with Image.open(filepath) as image:
         # 调色板 PNG 需要先转换颜色模式，透明图片保留 Alpha 通道
         mode = 'RGBA' if 'A' in image.getbands() or 'transparency' in image.info else 'RGB'
