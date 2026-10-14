@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 
-from config import BLACKLIST, DEBUG, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG
+from config import BLACKLIST, DEBUG, WEIBO_PER_HOUR, WEIBO_PER_HOUR_DEBUG, X18_SCORE_THRESHOLD
 from pathlib import Path
 from pixiv.client import pixiv_client
 from utils.db import db
@@ -38,7 +38,7 @@ def main():
 
             # 跑一下AI审核，发现色色就自己打一个薄码，免得被微博扣分
             moderation = moderate(pixiv_id, local_image)
-            if moderation and moderation['categories']['sexual'] is True:
+            if moderation and (moderation['categories']['sexual'] is True or moderation['category_scores']['sexual'] > X18_SCORE_THRESHOLD):
                 local_image = blur_image(pixiv_id, local_image)
 
             # 上传处理好的图片到微博图床
