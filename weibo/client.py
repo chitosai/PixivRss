@@ -5,6 +5,7 @@ from config import DEBUG, WEIBO_COOKIE_FILE
 from pathlib import Path
 from utils.http import configure_retries
 from utils.log import _write_log, debug, log, set_log_level
+from weibo.guest import weibo_guest_client
 
 
 class WeiboClient:
@@ -70,31 +71,6 @@ class WeiboClient:
         self.update_cookies(write_file = True)
         debug('Weibo heartbeat refresh succeeded')
         return True
-
-    def get_user_info(self, weibo_uid):
-        weibo_uid = str(weibo_uid)
-        if weibo_uid.startswith('u/'):
-            weibo_uid = weibo_uid[2:]
-
-        try:
-            response = self.session.get(
-                'https://m.weibo.cn/api/container/getIndex',
-                params = {'type': 'uid', 'value': weibo_uid},
-                timeout = 10,
-            )
-            response.raise_for_status()
-            data = response.json()
-            if data['ok'] != 1:
-                log(weibo_uid, 'Weibo user profile request failed')
-                return None
-            user_info = data['data']['userInfo']
-        except Exception as err:
-            log(weibo_uid, f'Weibo user profile request failed: {type(err).__name__}')
-            return None
-
-        self.update_cookies()
-        return user_info
-
     
     # 根据 pixiv_user_id 查找微博昵称
     def get_weibo_nickname(self, pixiv_id, pixiv_uid):
@@ -134,8 +110,8 @@ class WeiboClient:
         debug(f'Weibo found: {weibo_uid}')
         set_log_level(-1)
         
-        # 去 m.weibo.cn，获取用户信息
-        user_info = self.get_user_info(weibo_uid)
+        # 不登录，用访客身份尝试获取微博用户信息
+        user_info = weibo_guest_client.get_user_info(weibo_uid)
 
         if not user_info:
             log(pixiv_id, 'Error: failed to open weibo profile page, weibo_uid: %s' % weibo_uid)
