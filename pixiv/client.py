@@ -108,28 +108,33 @@ class PixivClient(AppPixivAPI):
         self.download(pixiv_image_url, path = str(local_image.parent), name = local_image.name, replace = True)
         debug('Download finished, saved to %s' % local_image)
 
-        # 检查文件尺寸，如果超过 2M 就用 Pillow 压缩一遍
+        # 检查文件尺寸，如果超过 2M 就触发压缩
         original_size = local_image.stat().st_size
         if original_size > 2000000:
-            from PIL import Image
-
-            set_log_level(+2)
-            try:
-                debug('%s: File size %s, will run a compress' % (illust['id'], original_size))
-                with Image.open(local_image) as image:
-                    # 抛弃 Alpha 通道，优化文件尺寸，质量 80
-                    with image.convert('RGB') as compressed_image:
-                        output_path = local_image.with_suffix('.jpg')
-                        compressed_image.save(output_path, 'JPEG', optimize = True, quality = 80)
-                # 如果压缩后文件名和原文件名不一样 (.jpg/.png)，就删除原文件，避免占用空间
-                if output_path != local_image:
-                    local_image.unlink()
-                local_image = output_path
-                debug('%s: Compressed size: %s' % (illust['id'], local_image.stat().st_size))
-            finally:
-                set_log_level(-2)
+            local_image = self.compress_image(local_image)
 
         return str(local_image)
+
+    def compress_image(self, image_path):
+        from PIL import Image
+        image_path = Path(image_path) # 先手动转换一次类型，避免传入的 image_path 不是 Path 类型导致后面 unlink 的地方比较不一致误删刚下载的图片
+
+        set_log_level(+2)
+        try:
+            debug('%s: File size %s, will run a compress' % (image_path, image_path.stat().st_size))
+            with Image.open(image_path) as image:
+                # 抛弃 Alpha 通道，优化文件尺寸，质量 80
+                with image.convert('RGB') as compressed_image:
+                    output_path = image_path.with_suffix('.jpg')
+                    compressed_image.save(output_path, 'JPEG', optimize = True, quality = 80)
+            # 如果压缩后文件名和原文件名不一样 (.jpg/.png)，就删除原文件，避免占用空间
+            if output_path != image_path:
+                image_path.unlink()
+            debug('%s: Compressed size: %s' % (image_path, output_path.stat().st_size))
+        finally:
+            set_log_level(-2)
+
+        return str(output_path)
 
 
 pixiv_client = PixivClient()
