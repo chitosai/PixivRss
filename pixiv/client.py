@@ -115,14 +115,17 @@ class PixivClient(AppPixivAPI):
 
         return str(local_image)
 
+    # 压缩图片，如果原图长边大于 4000px 会同时触发尺寸压缩和体积压缩，尺寸未超过阈值时只进行体积压缩
     def compress_image(self, image_path):
         from PIL import Image
-        image_path = Path(image_path) # 先手动转换一次类型，避免传入的 image_path 不是 Path 类型导致后面 unlink 的地方比较不一致误删刚下载的图片
+        image_path = Path(image_path) # 先手动转换一次类型，避免传入的 image_path 不是 Path 类型导致后面 unlink 时比较不一致误删刚下载的图片
 
         set_log_level(+2)
         try:
             debug('%s: File size %s, will run a compress' % (image_path, image_path.stat().st_size))
             with Image.open(image_path) as image:
+                # 长边超过 4000px 时等比缩小，不放大小图
+                image.thumbnail((4000, 4000), Image.LANCZOS)
                 # 抛弃 Alpha 通道，优化文件尺寸，质量 80
                 with image.convert('RGB') as compressed_image:
                     output_path = image_path.with_suffix('.jpg')
