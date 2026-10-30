@@ -3,8 +3,10 @@
 /config.py
 /test.py
 /_pixiv.token.json
-/_weibo.cookie.json
-/_weibo.cookie.original.json
+/_weibo_xsrf_cookies.json
+/_weibo_xsrf_cookies.original.json
+/_weibo_sso_cookies.json
+/_weibo_sso_cookies.original.json
 /.venv/
 /.local/
 

@@ -1,7 +1,7 @@
-import json, mimetypes, re
+import json, mimetypes, re, time
 import requests
 
-from config import DEBUG, WEIBO_COOKIE_FILE
+from config import DEBUG, WEIBO_SSO_COOKIES_FILE, WEIBO_XSRF_COOKIES_FILE
 from pathlib import Path
 from utils.http import configure_retries
 from utils.log import _write_log, debug, log, set_log_level
@@ -11,7 +11,7 @@ from weibo.guest import weibo_guest_client
 class WeiboClient:
     def __init__(self):
         # 读取本地 cookie
-        with open(WEIBO_COOKIE_FILE, 'r', encoding = 'utf-8') as file:
+        with open(WEIBO_XSRF_COOKIES_FILE, 'r', encoding = 'utf-8') as file:
             self.cookies = json.load(file)
 
         self.session = requests.Session()
@@ -42,12 +42,13 @@ class WeiboClient:
 
         # 保存更新的 cookie
         try:
-            with open(WEIBO_COOKIE_FILE, 'w', encoding = 'utf-8') as file:
+            with open(WEIBO_XSRF_COOKIES_FILE, 'w', encoding = 'utf-8') as file:
                 json.dump(self.cookies, file)
         except Exception as err:
             log('Weibo cookie write failed: %s' % type(err).__name__)
             raise
 
+    # 刷新 .weibo.cn 域下的短期 XSRF-TOKEN，它依赖于 refresh_login 获取到的新浪 SSO cookie
     def heartbeat(self):
         try:
             response = self.session.get('https://m.weibo.cn/api/config', timeout = 10)
@@ -71,7 +72,93 @@ class WeiboClient:
         self.update_cookies(write_file = True)
         debug('Weibo heartbeat refresh succeeded')
         return True
-    
+
+    # 刷新新浪登录中心 （.sina.com.cn) 下发的 SSO cookie，之后 heartbeat 会用它换取新的微博 XSRF-TOKEN。这个方法每7天之内要执行一次，否则 XSRF-TOKEN 续期会失败
+    def refresh_login(self):
+        response = None
+
+        try:
+            with open(WEIBO_SSO_COOKIES_FILE, 'r', encoding = 'utf-8') as file:
+                weibo_sso_cookies = json.load(file)
+            if not isinstance(weibo_sso_cookies, list) or not weibo_sso_cookies:
+                raise ValueError('SSO cookies must be a non-empty array')
+
+            # SSO 必须保留域信息，避免新浪和微博的同名 SUB 相互覆盖
+            with requests.Session() as sso_session:
+                configure_retries(sso_session)
+                sso_session.headers.update({
+                    name: self.session.headers[name]
+                    for name in ('user-agent', 'accept-language')
+                })
+                for cookie in weibo_sso_cookies:
+                    sso_session.cookies.set(**cookie)
+
+                # 只把微博 Cookie 发给微博域；也让重定向中的删除指令正常生效
+                for name, value in self.cookies.items():
+                    domain = '.m.weibo.cn' if name == 'XSRF-TOKEN' else '.weibo.cn'
+                    sso_session.cookies.set(name, value, domain = domain, path = '/')
+
+                response = sso_session.get(
+                    'https://login.sina.com.cn/sso/login.php',
+                    params = {
+                        'url': 'https://m.weibo.cn/',
+                        '_rand': time.time(),
+                        'gateway': 1,
+                        'service': 'sinawap',
+                        'entry': 'sinawap',
+                        'useticket': 1,
+                        'returntype': 'META',
+                        'sudaref': '',
+                        '_client_version': '0.6.36',
+                    },
+                    timeout = 10
+                )
+                response.raise_for_status()
+
+                # 必须是本次换票新下发的认证，不能拿原有登录状态冒充续期成功
+                if not any(
+                    cookie.name == 'SUB' and cookie.domain.lstrip('.') == 'weibo.cn'
+                    for step in response.history + [response]
+                    for cookie in step.cookies
+                ):
+                    raise ValueError('SSO did not issue a Weibo SUB cookie')
+
+                weibo_xsrf_cookies = {
+                    cookie.name: cookie.value
+                    for cookie in sso_session.cookies
+                    if cookie.domain.lstrip('.') in ('weibo.cn', 'm.weibo.cn')
+                }
+                self.session.cookies.clear()
+                self.session.cookies.update(weibo_xsrf_cookies)
+                self.session.headers['x-xsrf-token'] = weibo_xsrf_cookies.get('XSRF-TOKEN', '')
+
+                # 复用原心跳校验登录、刷新 XSRF 并保存；校验失败不保存换票结果
+                if not self.heartbeat():
+                    raise ValueError('Weibo login verification failed after SSO')
+
+                # 登录中心的凭据也会轮换，留给下一次换票；不混入微博域的 Cookie
+                sso_session.cookies.clear_expired_cookies()
+                weibo_sso_cookies = [
+                    {name: getattr(cookie, name) for name in ('name', 'value', 'domain', 'path', 'secure', 'expires')}
+                    for cookie in sso_session.cookies
+                    if cookie.domain.lstrip('.') == 'sina.com.cn' or cookie.domain.endswith('.sina.com.cn')
+                ]
+                with open(WEIBO_SSO_COOKIES_FILE, 'w', encoding = 'utf-8') as file:
+                    json.dump(weibo_sso_cookies, file, indent = 2)
+
+            debug('Weibo SSO refresh succeeded')
+            return True
+        except Exception as err:
+            log('Weibo SSO refresh failed: %s' % type(err).__name__)
+            details = f'--- Error:\n{err}'
+            if response is not None:
+                details += (
+                    f'\n--- Status: {response.status_code}\n--- URL: {response.url}'
+                    f'\n--- Headers:\n{response.headers}\n--- Response:\n{response.text}'
+                )
+            _write_log('Weibo SSO refresh', details)
+            raise
+
     # 根据 pixiv_user_id 查找微博昵称
     def get_weibo_nickname(self, pixiv_id, pixiv_uid):
         from utils.db import db
